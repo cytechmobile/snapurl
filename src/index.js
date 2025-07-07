@@ -1,22 +1,23 @@
 // src/index.js (or src/index.ts)
-import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid'; // You'll need to install nanoid: npm install nanoid
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // --- Handle POST requests to /create for generating new short links ---
+    // Handle POST requests to /create for generating new short links
     if (request.method === "POST" && path === "/create") {
       try {
         const { longUrl, customShortCode } = await request.json();
 
         if (!longUrl || !longUrl.startsWith("http")) {
-          return new Response("Invalid URL provided. Must start with http:// or https://", { status: 400 });
+          return new Response("Invalid URL provided", { status: 400 });
         }
 
         let shortCode = customShortCode;
         if (!shortCode) {
+          // Generate a unique short code if not provided
           do {
             shortCode = nanoid(6); // Generate a 6-character random ID
           } while (await env.racket_shortener.get(shortCode)); // Ensure it's not already used
@@ -27,7 +28,10 @@ export default {
             }
         }
 
-        await env.racket_shortener.put(shortCode, longUrl); // No expirationTtl for simplicity here
+        await env.racket_shortener.put(shortCode, longUrl, {
+            // Optional: Set an expiration for the short link (e.g., 30 days)
+            // expirationTtl: 60 * 60 * 24 * 30
+        });
 
         const shortenedUrl = `${url.origin}/${shortCode}`;
         return new Response(JSON.stringify({ shortUrl: shortenedUrl }), {
@@ -40,41 +44,25 @@ export default {
       }
     }
 
-    // --- Handle GET/other requests for proxying short links ---
+    // Handle GET requests for redirection
     const shortCode = path.slice(1); // Remove leading slash
 
     if (shortCode === "") {
-        // Handle requests to the root of your shortener domain (e.g., s.yourdomain.com/)
-        // You can return a custom landing page, or proxy a default site, or a 404
-        //return new Response("Welcome to the Proxy Link Shortener! Append a short code to the URL.", { status: 200 });
-        // Or to proxy a default site:
-         return fetch("https://racket.gr", request);
+        // Redirect root to your main website or show a landing page
+        return Response.redirect("https://yourmainwebsite.com", 302);
     }
 
     try {
       const longUrl = await env.racket_shortener.get(shortCode);
 
       if (longUrl) {
-        // Construct a new request to the long URL, preserving original method, headers, body etc.
-        // This is crucial for proper proxying, especially for POST requests, etc.
-        const proxyRequest = new Request(longUrl + url.search, request); // Append original query parameters
-
-        // Fetch the content from the long URL
-        const response = await fetch(proxyRequest);
-
-        // Return the response directly to the client
-        // Cloudflare Workers automatically handle streaming the body and
-        // copying headers (with some security exceptions)
-        return response;
-
+        return Response.redirect(longUrl, 302);
       } else {
-        // Short code not found
         return new Response("Short URL not found", { status: 404 });
       }
     } catch (error) {
-      console.error("Error proxying request:", error);
-      // More specific error handling could be added here, e.g., if the longUrl itself is down
-      return new Response("Error proxying content. The target site might be down or inaccessible.", { status: 502 }); // Bad Gateway
+      console.error("Error fetching from KV:", error);
+      return new Response("Internal Server Error", { status: 500 });
     }
   },
 };
