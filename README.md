@@ -2,7 +2,7 @@
 
 # **Cloudflare URL Shortener**
 
-A high-performance, privacy-conscious URL shortener implemented using Cloudflare Workers and Cloudflare KV. This project allows you to create custom short links that **redirect** users to the original long **URL**, all while providing options for detailed analytics.
+A high-performance URL shortener implemented using Cloudflare Workers and Cloudflare KV. This project allows you to create custom short links that **redirect** users to the original long **URL**, all while providing options for detailed analytics.
 
 ## **Features**
 
@@ -12,7 +12,6 @@ A high-performance, privacy-conscious URL shortener implemented using Cloudflare
 * **Analytics Integration:**  
   * **Cloudflare Workers Analytics Engine:** Built-in integration for logging event data (short code accessed, country, user agent) for scalable, real-time analytics within the Cloudflare dashboard.  
   * **Google Analytics 4 (GA4) Measurement Protocol:** Option to send detailed event data (including geographical information like country, region, and city) directly to your GA4 property for comprehensive tracking.  
-* **Privacy-Focused:** Utilizes random UUIDs for client\_id when sending to GA4 to avoid directly tracking user IPs.
 
 ## **Technologies Used**
 
@@ -34,7 +33,7 @@ A high-performance, privacy-conscious URL shortener implemented using Cloudflare
 
 1. **Install Wrangler CLI:**  
    ```Bash  
-   npm install \-g wrangler
+   npm install -g wrangler
    ```
 
 2. **Log in to Cloudflare via Wrangler:**  
@@ -63,8 +62,8 @@ Create two KV namespaces: one for production and one for development/preview.
 
 ```Bash
 
-wrangler kv:namespace create SHORTENER\_KV\_PRODUCTION  
-wrangler kv:namespace create SHORTENER\_KV\_PREVIEW \--preview
+wrangler kv:namespace create SHORTENER_KV_PRODUCTION  
+wrangler kv:namespace create SHORTENER_KV_PREVIEW --preview
 ```
 **Important:** Note the id values provided in the output for both namespaces. You will need them for wrangler.jsonc.
 
@@ -74,7 +73,7 @@ Open your wrangler.jsonc file (or wrangler.toml if you chose TOML) and update it
 Key changes to make:
 
 * Remove the assets block: This ensures your Worker handles all requests and doesn't fall back to serving static files for the root path.  
-* Add KV Namespace Bindings: Use the id and preview\_id from the previous step.  
+* Add KV Namespace Bindings: Use the id and preview_id from the previous step.  
 * Add Cloudflare Workers Analytics Engine Binding (Optional): If you want to use Cloudflare's built-in analytics.
 
 **Example wrangler.jsonc:**
@@ -116,7 +115,7 @@ Replace YOUR_PRODUCTION_KV_NAMESPACE_ID and YOUR_PREVIEW_KV_NAMESPACE_ID with th
 If you want to send data to GA4:
 
 1. **Get GA4 Measurement ID and API Secret:**  
-   * In your GA4 property, go to Admin \> Data Streams \> Web \> Select your data stream.  
+   * In your GA4 property, go to Admin > Data Streams > Web > Select your data stream.  
    * Copy your **Measurement ID** (e.g., G-XXXXXXXXXX).  
    * Under "Events", find "Measurement Protocol API secrets" and create a new secret, then copy the **API Secret**.
 
@@ -143,8 +142,8 @@ If you want to send data to GA4:
 2. Set up a Custom Domain (Optional but Recommended):  
    To use your own short domain (e.g., s.yourdomain.com):  
    * Log in to your Cloudflare dashboard.  
-   * Go to Workers & Pages \> Select your Worker.  
-   * Navigate to **Settings \> Triggers \> Custom Domains**.  
+   * Go to Workers & Pages > Select your Worker.  
+   * Navigate to **Settings > Triggers > Custom Domains**.  
    * Click "Add Custom Domain" and enter your desired subdomain (e.g., url.racket.gr). Cloudflare will handle DNS and SSL.
 
 ### **Usage**
@@ -174,13 +173,13 @@ Visit your short URL in a browser (e.g., [https://url.racket.gr/mycustomlink](ht
 
 #### **Cloudflare Workers Analytics Engine**
 
-* **View Metrics:** Log in to your Cloudflare dashboard, go to Workers & Pages \> Select your Worker \> Observability tab. You'll find charts and data based on the writeDataPoint calls.  
-* **Query Data:** Use the Cloudflare GraphQL Analytics API to run custom queries against your link\_shortener\_events dataset for detailed insights.
+* **View Metrics:** Log in to your Cloudflare dashboard, go to Workers & Pages > Select your Worker > Observability tab. You'll find charts and data based on the writeDataPoint calls.  
+* **Query Data:** Use the Cloudflare GraphQL Analytics API to run custom queries against your link_shortener_events dataset for detailed insights.
 
 #### **Google Analytics 4 (GA4) Measurement Protocol**
 
-* **Debug View:** To verify events in real-time, ensure debug\_mode: true is set in your Worker's GA4 payload (as shown in the src/index.js example). Then, go to GA4 Admin \> DebugView. Look for your short\_link\_access events and check the "User Properties" panel on the right for Country, Region, and City data.  
-* **Standard Reports:** After 24-48 hours, your GA4 standard reports (e.g., Demographics \> Geographic details) will show the aggregated location data. Remember to set up custom definitions for link\_short\_code and link\_longUrl if you want them as dimensions in GA4 reports.
+* **Debug View:** To verify events in real-time, ensure debug_mode: true is set in your Worker's GA4 payload (as shown in the src/index.js example). Then, go to GA4 Admin > DebugView. Look for your short_link_access events and check the "User Properties" panel on the right for Country, Region, and City data.  
+* **Standard Reports:** After 24-48 hours, your GA4 standard reports (e.g., Demographics > Geographic details) will show the aggregated location data. Remember to set up custom definitions for link_short_code and link_longUrl if you want them as dimensions in GA4 reports.
 
 ## **Contributing**
 
