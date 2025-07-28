@@ -163,7 +163,7 @@ wrangler kv:key put --namespace-id YOUR_PRODUCTION_KV_NAMESPACE_ID "your-short-c
 Replace YOUR_PRODUCTION_KV_NAMESPACE_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "[https://your-long-url.com](https://your-long-url.com)" with the destination URL.
 
 ***Using racket-url-manager TUI:***  
-Refer to the racket-url-manager/README.md file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
+Refer to the [racket-url-manager/README.md](racket-url-manager/README.md) file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
 
 #### **Accessing Short Links**
 
