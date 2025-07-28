@@ -51,7 +51,7 @@ A high-performance URL shortener implemented using Cloudflare Workers and Cloudf
 
    Choose the "Worker" template. Wrangler will generate src/index.js (or .ts) and wrangler.jsonc (or .toml).  
 4. Install nanoid:  
-   (Note: nanoid is primarily used by the racket-url-manager TUI for generating short codes.)  
+   (Note: nanoid is primarily used by the short-url-manager TUI for generating short codes.)  
    ```Bash  
    npm install nanoid
    ```
@@ -150,7 +150,7 @@ If you want to send data to GA4:
 
 #### **Creating Short Links**
 
-Short URLs for this service are managed using the racket-url-manager Terminal User Interface (TUI) application or directly via the wrangler Command Line Interface (CLI).  
+Short URLs for this service are managed using the short-url-manager Terminal User Interface (TUI) application or directly via the wrangler Command Line Interface (CLI).  
 
 ***Using wrangler CLI (Manual Key-Value Pair Creation):***  
 You can manually add short URL mappings directly to your Cloudflare KV namespace using wrangler.
@@ -162,8 +162,8 @@ wrangler kv:key put --namespace-id YOUR_PRODUCTION_KV_NAMESPACE_ID "your-short-c
 
 Replace YOUR_PRODUCTION_KV_NAMESPACE_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "[https://your-long-url.com](https://your-long-url.com)" with the destination URL.
 
-***Using racket-url-manager TUI:***  
-Refer to the [racket-url-manager/README.md](racket-url-manager/README.md) file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
+***Using short-url-manager TUI:***  
+Refer to the [short-url-manager/README.md](short-url-manager/README.md) file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
 
 #### **Accessing Short Links**
 
