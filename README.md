@@ -33,35 +33,39 @@ A high-performance, privacy-conscious URL shortener implemented using Cloudflare
 ### **Installation**
 
 1. **Install Wrangler CLI:**  
-   Bash  
+   ```Bash  
    npm install \-g wrangler
+   ```
 
 2. **Log in to Cloudflare via Wrangler:**  
-   Bash  
+   ```Bash  
    wrangler login
+   ```
 
    Follow the prompts to authenticate.  
 3. Create a new Worker project:  
    If you haven't already, create your project directory and initialize the Worker.  
-   Bash  
+   ```Bash  
    wrangler init my-link-shortener  
    cd my-link-shortener
+   ```
 
    Choose the "Worker" template. Wrangler will generate src/index.js (or .ts) and wrangler.jsonc (or .toml).  
 4. Install nanoid:  
    (Note: nanoid is primarily used by the racket-url-manager TUI for generating short codes.)  
-   Bash  
+   ```Bash  
    npm install nanoid
+   ```
 
 ### **Cloudflare KV Namespace Setup**
 
 Create two KV namespaces: one for production and one for development/preview.
 
-Bash
+```Bash
 
 wrangler kv:namespace create SHORTENER\_KV\_PRODUCTION  
 wrangler kv:namespace create SHORTENER\_KV\_PREVIEW \--preview
-
+```
 **Important:** Note the id values provided in the output for both namespaces. You will need them for wrangler.jsonc.
 
 ### **Configuration (wrangler.jsonc)**
@@ -75,36 +79,36 @@ Key changes to make:
 
 **Example wrangler.jsonc:**
 
-JSON
+```JSON
 
 {  
-  "$schema": "node\_modules/wrangler/config-schema.json",  
+  "$schema": "node_modules/wrangler/config-schema.json",  
   "name": "racket-link-shortener",  
   "main": "src/index.js",  
-  "compatibility\_date": "2025-07-05",  
-  "compatibility\_flags": \[  
-    "nodejs\_compat",  
-    "global\_fetch\_strictly\_public"  
-  \],  
+  "compatibility_date": "2025-07-05",  
+  "compatibility_flags": [  
+    "nodejs_compat",  
+    "global_fetch_strictly_public"  
+  ],  
   "observability": {  
     "enabled": true  
   },  
-  "kv\_namespaces": \[  
+  "kv_namespaces": [  
     {  
-      "binding": "racket\_shortener",  
-      "id": "YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID",  
-      "preview\_id": "YOUR\_PREVIEW\_KV\_NAMESPACE\_ID"  
+      "binding": "racket_shortener",  
+      "id": "YOUR_PRODUCTION_KV_NAMESPACE_ID",  
+      "preview_id": "YOUR_PREVIEW_KV_NAMESPACE_ID"  
     }  
-  \],  
-  "analytics\_engine\_datasets": \[  
+  ],  
+  "analytics_engine_datasets": [  
     {  
       "binding": "ANALYTICS",  
-      "dataset": "link\_shortener\_events"  
+      "dataset": "link_shortener_events"  
     }  
-  \]  
+  ]  
 }
-
-Replace YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID and YOUR\_PREVIEW\_KV\_NAMESPACE\_ID with the actual IDs from your wrangler kv:namespace create output.
+```
+Replace YOUR_PRODUCTION_KV_NAMESPACE_ID and YOUR_PREVIEW_KV_NAMESPACE_ID with the actual IDs from your wrangler kv:namespace create output.
 
 ### **Google Analytics 4 (GA4) Setup (Optional)**
 
@@ -115,13 +119,24 @@ If you want to send data to GA4:
    * Copy your **Measurement ID** (e.g., G-XXXXXXXXXX).  
    * Under "Events", find "Measurement Protocol API secrets" and create a new secret, then copy the **API Secret**.
 
-2. # **Store GA4 Credentials as Secrets:**    **Bash**    **wrangler secret put GOOGLE\_ANALYTICS\_MEASUREMENT\_ID**      **Paste your Measurement ID when prompted**     **Bash**    **wrangler secret put GOOGLE\_ANALYTICS\_API\_SECRET**      **Paste your API Secret when prompted** 
+2. **Store GA4 Credentials as Secrets:**
+     ```Bash
+     wrangler secret put GOOGLE_ANALYTICS_MEASUREMENT_ID
+     ```
+   Paste your Measurement ID when prompted
+
+   ```Bash
+   wrangler secret put GOOGLE_ANALYTICS_API_SECRET
+   ```
+   
+   Paste your API Secret when prompted** 
 
 ### **Deployment**
 
 1. **Deploy your Worker:**  
-   Bash  
+   ```Bash  
    wrangler deploy
+   ```
 
    This will deploy your Worker to Cloudflare, making it accessible via a workers.dev subdomain.  
 2. Set up a Custom Domain (Optional but Recommended):  
@@ -136,16 +151,19 @@ If you want to send data to GA4:
 #### **Creating Short Links**
 
 Short URLs for this service are managed using the racket-url-manager Terminal User Interface (TUI) application or directly via the wrangler Command Line Interface (CLI).  
-Using racket-url-manager TUI:  
-Refer to the racket-url-manager/README.md file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
-Using wrangler CLI (Manual Key-Value Pair Creation):  
+
+***Using wrangler CLI (Manual Key-Value Pair Creation):***  
 You can manually add short URL mappings directly to your Cloudflare KV namespace using wrangler.
 
-Bash
+```Bash
 
-wrangler kv:key put \--namespace-id YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID "your-short-code" "\[https://your-long-url.com\](https://your-long-url.com)"
+wrangler kv:key put --namespace-id YOUR_PRODUCTION_KV_NAMESPACE_ID "your-short-code" "[https://your-long-url.com](https://your-long-url.com)"
+```
 
-Replace YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "[https://your-long-url.com](https://your-long-url.com)" with the destination URL.
+Replace YOUR_PRODUCTION_KV_NAMESPACE_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "[https://your-long-url.com](https://your-long-url.com)" with the destination URL.
+
+***Using racket-url-manager TUI:***  
+Refer to the racket-url-manager/README.md file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
 
 #### **Accessing Short Links**
 
