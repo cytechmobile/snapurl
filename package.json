@@ -1,16 +1,22 @@
 {
-	"name": "my-link-shortener",
+	"name": "racket-link-shortener",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
-		"test": "vitest"
+		"test": "vitest",
+		"tui": "node tui.js"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
 		"vitest": "~3.2.0",
 		"wrangler": "^4.23.0"
+	},
+	"dependencies": {
+		"chalk": "^5.4.1",
+		"inquirer": "^12.8.2",
+		"nanoid": "^5.1.5"
 	}
 }
