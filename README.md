@@ -85,7 +85,8 @@ Key changes to make:
   "$schema": "node_modules/wrangler/config-schema.json",  
   "name": "racket-link-shortener",  
   "main": "src/index.js",  
-  "compatibility_date": "2025-07-05",  
+  "compatibility_date": "2025-07-05",
+		"account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID",
   "compatibility_flags": [  
     "nodejs_compat",  
     "global_fetch_strictly_public"  
