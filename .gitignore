@@ -172,3 +172,4 @@ dist
 .wrangler/
 url-mappings.csv
 package-lock.json
+wrangler.jsonc
