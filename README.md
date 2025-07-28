@@ -1,3 +1,5 @@
+
+
 # **Cloudflare URL Shortener**
 
 A high-performance, privacy-conscious URL shortener implemented using Cloudflare Workers and Cloudflare KV. This project allows you to create custom short links that **redirect** users to the original long **URL**, all while providing options for detailed analytics.
@@ -31,25 +33,32 @@ A high-performance, privacy-conscious URL shortener implemented using Cloudflare
 ### **Installation**
 
 1. **Install Wrangler CLI:**  
+   Bash  
    npm install \-g wrangler
 
 2. **Log in to Cloudflare via Wrangler:**  
+   Bash  
    wrangler login
 
    Follow the prompts to authenticate.  
 3. Create a new Worker project:  
    If you haven't already, create your project directory and initialize the Worker.  
+   Bash  
    wrangler init my-link-shortener  
    cd my-link-shortener
 
    Choose the "Worker" template. Wrangler will generate src/index.js (or .ts) and wrangler.jsonc (or .toml).  
 4. Install nanoid:  
    (Note: nanoid is primarily used by the racket-url-manager TUI for generating short codes.)  
+   Bash  
    npm install nanoid
 
 ### **Cloudflare KV Namespace Setup**
 
-Create two KV namespaces: one for production and one for development/preview.  
+Create two KV namespaces: one for production and one for development/preview.
+
+Bash
+
 wrangler kv:namespace create SHORTENER\_KV\_PRODUCTION  
 wrangler kv:namespace create SHORTENER\_KV\_PREVIEW \--preview
 
@@ -58,13 +67,16 @@ wrangler kv:namespace create SHORTENER\_KV\_PREVIEW \--preview
 ### **Configuration (wrangler.jsonc)**
 
 Open your wrangler.jsonc file (or wrangler.toml if you chose TOML) and update it.  
-**Key changes to make:**
+Key changes to make:
 
 * Remove the assets block: This ensures your Worker handles all requests and doesn't fall back to serving static files for the root path.  
 * Add KV Namespace Bindings: Use the id and preview\_id from the previous step.  
 * Add Cloudflare Workers Analytics Engine Binding (Optional): If you want to use Cloudflare's built-in analytics.
 
-**Example wrangler.jsonc:**  
+**Example wrangler.jsonc:**
+
+JSON
+
 {  
   "$schema": "node\_modules/wrangler/config-schema.json",  
   "name": "racket-link-shortener",  
@@ -74,24 +86,20 @@ Open your wrangler.jsonc file (or wrangler.toml if you chose TOML) and update it
     "nodejs\_compat",  
     "global\_fetch\_strictly\_public"  
   \],  
-  // REMOVE THE "assets" BLOCK ENTIRELY if it exists  
-  // "assets": {  
-  //   "directory": "./public"  
-  // },  
   "observability": {  
     "enabled": true  
   },  
   "kv\_namespaces": \[  
     {  
-      "binding": "racket\_shortener", // This is the name your Worker code will use (e.g., env.racket\_shortener)  
+      "binding": "racket\_shortener",  
       "id": "YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID",  
       "preview\_id": "YOUR\_PREVIEW\_KV\_NAMESPACE\_ID"  
     }  
   \],  
-  "analytics\_engine\_datasets": \[ // Add this section for Cloudflare Analytics Engine  
+  "analytics\_engine\_datasets": \[  
     {  
-      "binding": "ANALYTICS", // This is the binding name you'll use in your Worker code  
-      "dataset": "link\_shortener\_events" // This is the name of your dataset  
+      "binding": "ANALYTICS",  
+      "dataset": "link\_shortener\_events"  
     }  
   \]  
 }
@@ -105,17 +113,14 @@ If you want to send data to GA4:
 1. **Get GA4 Measurement ID and API Secret:**  
    * In your GA4 property, go to Admin \> Data Streams \> Web \> Select your data stream.  
    * Copy your **Measurement ID** (e.g., G-XXXXXXXXXX).  
-   * Under "Events", find "Measurement Protocol API secrets" and create a new secret, then copy the **API Secret**.  
-2. **Store GA4 Credentials as Secrets:**  
-   wrangler secret put GOOGLE\_ANALYTICS\_MEASUREMENT\_ID  
-   \# Paste your Measurement ID when prompted
+   * Under "Events", find "Measurement Protocol API secrets" and create a new secret, then copy the **API Secret**.
 
-   wrangler secret put GOOGLE\_ANALYTICS\_API\_SECRET  
-   \# Paste your API Secret when prompted
+2. # **Store GA4 Credentials as Secrets:**    **Bash**    **wrangler secret put GOOGLE\_ANALYTICS\_MEASUREMENT\_ID**      **Paste your Measurement ID when prompted**     **Bash**    **wrangler secret put GOOGLE\_ANALYTICS\_API\_SECRET**      **Paste your API Secret when prompted** 
 
 ### **Deployment**
 
 1. **Deploy your Worker:**  
+   Bash  
    wrangler deploy
 
    This will deploy your Worker to Cloudflare, making it accessible via a workers.dev subdomain.  
@@ -130,18 +135,21 @@ If you want to send data to GA4:
 
 #### **Creating Short Links**
 
-Short URLs for this service are managed using the **racket-url-manager Terminal User Interface (TUI)** application or directly via the **wrangler Command Line Interface (CLI)**.  
+Short URLs for this service are managed using the racket-url-manager Terminal User Interface (TUI) application or directly via the wrangler Command Line Interface (CLI).  
 Using racket-url-manager TUI:  
 Refer to the racket-url-manager/README.md file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
 Using wrangler CLI (Manual Key-Value Pair Creation):  
-You can manually add short URL mappings directly to your Cloudflare KV namespace using wrangler.  
+You can manually add short URL mappings directly to your Cloudflare KV namespace using wrangler.
+
+Bash
+
 wrangler kv:key put \--namespace-id YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID "your-short-code" "\[https://your-long-url.com\](https://your-long-url.com)"
 
-Replace YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "https://your-long-url.com" with the destination URL.
+Replace YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "[https://your-long-url.com](https://your-long-url.com)" with the destination URL.
 
 #### **Accessing Short Links**
 
-Visit your short URL in a browser (e.g., https://url.racket.gr/mycustomlink). The Worker will **redirect** the user to the longUrl.
+Visit your short URL in a browser (e.g., [https://url.racket.gr/mycustomlink](https://url.racket.gr/mycustomlink)). The Worker will **redirect** the user to the longUrl.
 
 ### **Analytics**
 
