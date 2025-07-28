@@ -1,6 +1,6 @@
 # **Cloudflare URL Shortener**
 
-A high-performance, privacy-conscious URL shortener implemented using Cloudflare Workers and Cloudflare KV. This project allows you to create custom short links that **redirect users to the original long URL**, all while providing options for detailed analytics.
+A high-performance, privacy-conscious URL shortener implemented using Cloudflare Workers and Cloudflare KV. This project allows you to create custom short links that **redirect** users to the original long **URL**, all while providing options for detailed analytics.
 
 ## **Features**
 
@@ -14,11 +14,11 @@ A high-performance, privacy-conscious URL shortener implemented using Cloudflare
 
 ## **Technologies Used**
 
-* Cloudflare Workers: Serverless execution environment at the edge.  
-* Cloudflare KV: Distributed key-value store for URL mappings.  
-* Wrangler CLI: Cloudflare's command-line tool for Workers development and deployment.  
-* nanoid: For generating short, unique IDs.  
-* Google Analytics 4 (GA4) Measurement Protocol (Optional): For external analytics.
+* **Cloudflare Workers:** Serverless execution environment at the edge.  
+* **Cloudflare KV:** Distributed key-value store for URL mappings.  
+* **Wrangler CLI:** Cloudflare's command-line tool for Workers development and deployment.  
+* **nanoid:** For generating short, unique IDs (used by the TUI for auto-generated codes).  
+* **Google Analytics 4 (GA4) Measurement Protocol (Optional):** For external analytics.
 
 ## **Setup and Deployment**
 
@@ -43,7 +43,8 @@ A high-performance, privacy-conscious URL shortener implemented using Cloudflare
    cd my-link-shortener
 
    Choose the "Worker" template. Wrangler will generate src/index.js (or .ts) and wrangler.jsonc (or .toml).  
-4. **Install nanoid:**  
+4. Install nanoid:  
+   (Note: nanoid is primarily used by the racket-url-manager TUI for generating short codes.)  
    npm install nanoid
 
 ### **Cloudflare KV Namespace Setup**
@@ -112,172 +113,6 @@ If you want to send data to GA4:
    wrangler secret put GOOGLE\_ANALYTICS\_API\_SECRET  
    \# Paste your API Secret when prompted
 
-### **Worker Code (src/index.js)**
-
-Update your src/index.js file with the logic for redirection and logging analytics.  
-// src/index.js  
-import { nanoid } from 'nanoid';
-
-export default {  
-  async fetch(request, env, event) {  
-    const url \= new URL(request.url);  
-    const path \= url.pathname;
-
-    // \--- Handle POST requests to /create for generating new short links \---  
-    if (request.method \=== "POST" && path \=== "/create") {  
-      try {  
-        const { longUrl, customShortCode } \= await request.json();
-
-        if (\!longUrl || \!longUrl.startsWith("http")) {  
-          return new Response("Invalid URL provided. Must start with http:// or https://", { status: 400 });  
-        }
-
-        let shortCode \= customShortCode;  
-        if (\!shortCode) {  
-          do {  
-            shortCode \= nanoid(6);  
-          } while (await env.racket\_shortener.get(shortCode));  
-        } else {  
-            if (await env.racket\_shortener.get(shortCode)) {  
-                return new Response("Custom short code already in use", { status: 409 });  
-            }  
-        }
-
-        await env.racket\_shortener.put(shortCode, longUrl);
-
-        const shortenedUrl \= \`${url.origin}/${shortCode}\`;  
-        return new Response(JSON.stringify({ shortUrl: shortenedUrl }), {  
-          headers: { "Content-Type": "application/json" },  
-          status: 200,  
-        });  
-      } catch (error) {  
-        console.error("Error creating short URL:", error);  
-        return new Response("Error creating short URL", { status: 500 });  
-      }  
-    }
-
-    // \--- Handle GET/other requests for URL redirection \---  
-    const shortCode \= path.slice(1);
-
-    if (shortCode \=== "") {  
-        return new Response("Welcome to the URL Shortener\! Append a short code to the URL.", { status: 200 });  
-    }
-
-    try {  
-      const longUrl \= await env.racket\_shortener.get(shortCode);
-
-      if (longUrl) {  
-        // Log to Cloudflare Workers Analytics Engine (Optional)  
-        logCloudflareAnalytics(request, env, shortCode, longUrl);
-
-        // Log to Google Analytics 4 Measurement Protocol (Optional)  
-        event.waitUntil(  
-          logGoogleAnalytics(request, env, shortCode, longUrl)  
-        );
-
-        // Perform HTTP 302 Redirect  
-        return Response.redirect(longUrl, 302);  
-      } else {  
-        return new Response("Short URL not found", { status: 404 });  
-      }  
-    } catch (error) {  
-      console.error("Error redirecting request:", error);  
-      return new Response("Internal Server Error during redirection.", { status: 500 });  
-    }  
-  },  
-};
-
-// Function to log data to Cloudflare Workers Analytics Engine  
-function logCloudflareAnalytics(request, env, shortCode, longUrl) {  
-  try {  
-    const country \= request.cf?.country || 'unknown';  
-    const userAgent \= request.headers.get('User-Agent') || 'unknown';
-
-    env.ANALYTICS.writeDataPoint({  
-      blobs: \[  
-        shortCode,   // blob1: The short code accessed  
-        country,     // blob2: Country of the user  
-        userAgent,   // blob3: User agent string  
-        longUrl      // blob4: The long URL that was redirected  
-      \],  
-      doubles: \[  
-        1            // double1: A simple counter for each access  
-      \]  
-    });  
-    console.log(\`Cloudflare Analytics event for '${shortCode}' sent.\`);  
-  } catch (e) {  
-    console.error("Error sending to Cloudflare Analytics Engine:", e);  
-  }  
-}
-
-// Function to log data to Google Analytics 4 Measurement Protocol  
-async function logGoogleAnalytics(request, env, shortCode, longUrl) {  
-  const measurementId \= env.GOOGLE\_ANALYTICS\_MEASUREMENT\_ID;  
-  const apiSecret \= env.GOOGLE\_ANALYTICS\_API\_SECRET;
-
-  if (\!measurementId || \!apiSecret) {  
-    console.error("Missing Google Analytics credentials. Skipping GA4 logging.");  
-    return;  
-  }
-
-  const clientId \= crypto.randomUUID(); // Generate a random UUID for client\_id  
-  const userAgent \= request.headers.get('User-Agent') || 'unknown-user-agent';  
-  const countryCode \= request.cf?.country || 'unknown';  
-  const regionCodeRaw \= request.cf?.regionCode || '';  
-  const city \= request.cf?.city || 'unknown';
-
-  const regionId \= (countryCode \!== 'unknown' && regionCodeRaw \!== '') ? \`${countryCode}-${regionCodeRaw}\` : 'unknown';
-
-  const gaPayload \= {  
-    client\_id: clientId,  
-    events: \[  
-      {  
-        name: "short\_link\_access",  
-        params: {  
-          link\_short\_code: shortCode,  
-          link\_longUrl: longUrl,  
-          page\_path: request.url,  
-          page\_referrer: request.headers.get('Referer') || 'none',  
-          user\_agent: userAgent,  
-          engagement\_time\_msec: 1,         // Number  
-          session\_id: Date.now(),          // Number  
-          session\_start: true,             // Boolean  
-          debug\_mode: true                 // Set to 'true' for DebugView, remove for production  
-        },  
-      },  
-    \],  
-    user\_location: {  
-      country\_id: countryCode,  
-      region\_id: regionId,  
-      city: city,  
-      continent\_id: request.cf?.continent || 'unknown'  
-    }  
-  };
-
-  try {  
-    const response \= await fetch(  
-      \`https://www.google-analytics.com/mp/collect?measurement\_id=${measurementId}\&api\_secret=${apiSecret}\`,  
-      {  
-        method: "POST",  
-        headers: {  
-          "Content-Type": "application/json",  
-        },  
-        body: JSON.stringify(gaPayload),  
-      }  
-    );
-
-    if (\!response.ok) {  
-      const errorText \= await response.text();  
-      console.error(\`Failed to send GA4 event: ${response.status} \- ${errorText}\`);  
-    } else {  
-      console.log(\`GA4 event for '${shortCode}' with client\_id '${clientId}' sent successfully.\`);  
-    }
-
-  } catch (error) {  
-    console.error("Error sending GA4 event:", error);  
-  }  
-}
-
 ### **Deployment**
 
 1. **Deploy your Worker:**  
@@ -295,19 +130,14 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
 
 #### **Creating Short Links**
 
-Send a POST request to your Worker's /create endpoint with a JSON body:  
-curl \-X POST \\  
-  https://url.racket.gr/create \\  
-  \-H "Content-Type: application/json" \\  
-  \-d '{  
-    "longUrl": "https://www.example.com/this-is-a-very-long-url-that-needs-shortening",  
-    "customShortCode": "mycustomlink"  
-  }'
+Short URLs for this service are managed using the **racket-url-manager Terminal User Interface (TUI)** application or directly via the **wrangler Command Line Interface (CLI)**.  
+Using racket-url-manager TUI:  
+Refer to the racket-url-manager/README.md file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
+Using wrangler CLI (Manual Key-Value Pair Creation):  
+You can manually add short URL mappings directly to your Cloudflare KV namespace using wrangler.  
+wrangler kv:key put \--namespace-id YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID "your-short-code" "\[https://your-long-url.com\](https://your-long-url.com)"
 
-* longUrl: The URL to shorten (required).  
-* customShortCode: (Optional) Your desired short code. If omitted, a random 6-character code will be generated.
-
-Alternatively, you can manually add key-value pairs directly in your Cloudflare dashboard under Workers & Pages \> KV \> Your KV Namespace.
+Replace YOUR\_PRODUCTION\_KV\_NAMESPACE\_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "https://your-long-url.com" with the destination URL.
 
 #### **Accessing Short Links**
 
