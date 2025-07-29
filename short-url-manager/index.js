@@ -72,7 +72,7 @@ class URLShortenerTUI {
       { name: '🔍 Search mappings', value: 'search' },
       { name: '🔄 Refresh mappings from KV', value: 'refresh' },
       { name: '💾 Export to CSV', value: 'export' },
-      { name: '⚙️  Settings', value: 'settings' },
+      { name: '⚙️ Settings', value: 'settings' },
       { name: '🚪 Exit', value: 'exit' }
     ];
 
