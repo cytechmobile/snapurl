@@ -2,7 +2,7 @@
 
 ## Ready-to-Send Package
 
-✅ **`racket-url-manager-v1.0.zip`** - Complete standalone package ready for distribution
+✅ **`short-url-manager-v1.0.zip`** - Complete standalone package ready for distribution
 
 ## What's Included in the Package
 
@@ -14,7 +14,7 @@
 ## How to Share
 
 ### Option 1: Direct File Sharing
-Send the `racket-url-manager-v1.0.zip` file directly to team members via:
+Send the `short-url-manager-v1.0.zip` file directly to team members via:
 - Email attachment
 - File sharing service (Google Drive, Dropbox, etc.)
 - Internal company file share
@@ -27,7 +27,7 @@ Send this message along with the zip file:
 
 **🔗 Racket URL Manager Setup**
 
-1. **Download and extract:** `racket-url-manager-v1.0.zip`
+1. **Download and extract:** `short-url-manager-v1.0.zip`
 2. **Open terminal/command prompt** in the extracted folder
 3. **Run setup:**
    - Linux/Mac: `./setup.sh`
@@ -36,7 +36,7 @@ Send this message along with the zip file:
 
 **Requirements:**
 - Node.js 18+ ([download here](https://nodejs.org/))
-- Cloudflare account access to racket-url-shortener project
+- Cloudflare account access to short-url-shortener project
 
 The setup script will handle everything else automatically!
 
@@ -52,7 +52,7 @@ The setup script will handle everything else automatically!
 ## Package Contents Summary
 
 ```
-racket-url-manager-distribution/
+short-url-manager-distribution/
 ├── index.js           # Main TUI application
 ├── package.json       # Dependencies & scripts
 ├── README.md          # Complete usage guide

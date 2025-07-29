@@ -82,7 +82,7 @@ Key changes to make:
 
 {  
   "$schema": "node_modules/wrangler/config-schema.json",  
-  "name": "racket-link-shortener",  
+  "name": "my-link-shortener",  
   "main": "src/index.js",  
   "compatibility_date": "2025-07-05",
 		"account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID",
@@ -95,7 +95,7 @@ Key changes to make:
   },  
   "kv_namespaces": [  
     {  
-      "binding": "racket_shortener",  
+      "binding": "my_shortener_kv",  
       "id": "YOUR_PRODUCTION_KV_NAMESPACE_ID",  
       "preview_id": "YOUR_PREVIEW_KV_NAMESPACE_ID"  
     }  

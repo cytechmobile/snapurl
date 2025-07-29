@@ -15,8 +15,8 @@ A Terminal User Interface (TUI) for managing Racket URL Shortener mappings.
 ### Option 1: Direct Installation (Recommended)
 
 ```bash
-# Clone or download the racket-url-manager folder
-cd racket-url-manager
+# Clone or download the short-url-manager folder
+cd short-url-manager
 
 # Install dependencies
 npm install
@@ -32,11 +32,11 @@ npm start
 ### Option 2: Global Installation
 
 ```bash
-cd racket-url-manager
+cd short-url-manager
 npm install -g .
 
 # Now you can run from anywhere
-racket-url-manager
+short-url-manager
 ```
 
 ## Usage
@@ -77,7 +77,7 @@ RACKET_WORKER_URL=https://your-worker.workers.dev RACKET_CSV_FILE=./custom.csv n
 
 - Node.js 18.0.0 or higher
 - **Wrangler CLI** installed and authenticated
-- **Cloudflare account access** to the racket-url-shortener project
+- **Cloudflare account access** to the my-url-shortener project
 
 ## How It Works
 
@@ -114,12 +114,12 @@ The application will look for and create these files in your current directory:
    ```bash
    wrangler kv namespace list
    ```
-   You should see the `racket_shortener` namespace listed.
+   You should see the `my_shortener_kv` namespace listed.
 
 ### For Team Members
 
 To use this TUI, team members need:
-1. **Cloudflare account access** to the racket-url-shortener project
+1. **Cloudflare account access** to the my-url-shortener project
 2. **Appropriate permissions** to read/write the KV namespace
 3. **Wrangler authentication** completed (see steps above)
 
@@ -155,12 +155,12 @@ To share this application with others:
 
 ### For Project Team Members
 
-1. **Zip the entire `racket-url-manager` folder**
+1. **Zip the entire `short-url-manager` folder**
 2. **Share the zip file** with installation instructions
 3. **Recipients should:**
    ```bash
-   unzip racket-url-manager.zip
-   cd racket-url-manager  
+   unzip short-url-manager.zip
+   cd short-url-manager  
    npm install
    
    # Install and authenticate Wrangler (if not done already)
@@ -173,14 +173,14 @@ To share this application with others:
 
 ### Important Notes
 
-- **Recipients must have Cloudflare account access** to the racket-url-shortener project
+- **Recipients must have Cloudflare account access** to the my-url-shortener project
 - **They need appropriate KV namespace permissions** to read/write URL mappings
 - **The application works entirely through Wrangler CLI** - no public API endpoints
 - **All operations are authenticated** through their Cloudflare account
 
 ## Default Configuration
 
-- **Worker URL:** `https://racket-link-shortener.hostmaster-c9c.workers.dev`
+- **Worker URL:** `https://my-link-shortener.hostmaster-c9c.workers.dev`
 - **CSV File:** `./url-mappings.csv` (in current directory)
 
 ## Security
