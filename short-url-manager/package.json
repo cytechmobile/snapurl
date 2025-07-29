@@ -1,10 +1,10 @@
 {
-  "name": "racket-url-manager",
+  "name": "short-url-manager",
   "version": "1.0.0",
   "description": "Terminal UI for managing Racket URL Shortener mappings",
   "main": "index.js",
   "bin": {
-    "racket-url-manager": "./index.js"
+    "short-url-manager": "./index.js"
   },
   "scripts": {
     "start": "node index.js"
