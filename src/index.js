@@ -72,8 +72,7 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
           page_referrer: request.headers.get('Referer') || 'none',
           user_agent: userAgent,
           engagement_time_msec: "1",
-          session_id: Date.now().toString(),
-          debug_mode: true // Set to true for testing in GA4 DebugView
+          session_id: Date.now().toString()
         }
       }
     ],
