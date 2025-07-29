@@ -69,6 +69,7 @@ class URLShortenerTUI {
     const choices = [
       { name: '📋 List all URL mappings', value: 'list' },
       { name: '➕ Create new short URL', value: 'create' },
+      { name: '❌ Delete short URL', value: 'delete' },
       { name: '🔍 Search mappings', value: 'search' },
       { name: '🔄 Refresh mappings from KV', value: 'refresh' },
       { name: '💾 Export to CSV', value: 'export' },
@@ -92,6 +93,9 @@ class URLShortenerTUI {
         break;
       case 'create':
         await this.createMapping();
+        break;
+      case 'delete':
+        await this.deleteMapping();
         break;
       case 'search':
         await this.searchMappings();
@@ -232,6 +236,78 @@ class URLShortenerTUI {
     } catch (error) {
       console.log(chalk.red(`\n❌ Error creating short URL: ${error.message}\n`));
       console.log(chalk.yellow('Make sure wrangler is installed and you\'re authenticated\n'));
+    }
+
+    await this.pressEnterToContinue();
+  }
+
+  async deleteMapping() {
+    console.log(chalk.blue.bold('\n❌ Delete Short URL\n'));
+
+    if (this.mappings.size === 0) {
+      console.log(chalk.gray('No mappings found to delete.\n'));
+      await this.pressEnterToContinue();
+      return;
+    }
+
+    const sortedMappings = Array.from(this.mappings.entries()).sort();
+    
+    const { shortCodeToDelete } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'shortCodeToDelete',
+        message: 'Which short URL would you like to delete?',
+        choices: [
+          ...sortedMappings.map(([shortCode, longUrl]) => ({
+            name: `${shortCode.padEnd(25)} → ${chalk.gray(longUrl)}`,
+            value: shortCode
+          })),
+          new inquirer.Separator(),
+          { name: 'Cancel', value: null }
+        ],
+        pageSize: 15
+      }
+    ]);
+
+    if (!shortCodeToDelete) {
+      console.log(chalk.yellow('\nDeletion cancelled.\n'));
+      await this.pressEnterToContinue();
+      return;
+    }
+
+    const { confirmDelete } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'confirmDelete',
+        message: `Are you sure you want to delete the short URL '${chalk.cyan(shortCodeToDelete)}'? This cannot be undone.`,
+        default: false
+      }
+    ]);
+
+    if (confirmDelete) {
+      try {
+        console.log(chalk.yellow(`\n⏳ Deleting short URL '${shortCodeToDelete}'...`));
+
+        // Delete from Cloudflare KV
+        execSync(`wrangler kv key delete "${shortCodeToDelete}" --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote`, {
+          encoding: 'utf8',
+          stdio: 'pipe'
+        });
+
+        // Delete from local mappings
+        this.mappings.delete(shortCodeToDelete);
+
+        console.log(chalk.green('\n✅ Short URL deleted successfully!\n'));
+        
+        // Auto-export to CSV
+        await this.exportToCSV(false);
+
+      } catch (error) {
+        console.log(chalk.red(`\n❌ Error deleting short URL: ${error.message}\n`));
+        console.log(chalk.yellow('Make sure wrangler is installed and you\'re authenticated\n'));
+      }
+    } else {
+      console.log(chalk.yellow('\nDeletion cancelled.\n'));
     }
 
     await this.pressEnterToContinue();
