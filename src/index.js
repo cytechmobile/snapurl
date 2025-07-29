@@ -52,29 +52,28 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
 
   // Construct the GA4 event payload
   const gaPayload = {
-    // A unique identifier for the user (can be their IP, a generated cookie, etc.)
     client_id: clientId,
-    user_properties: {
-      country: { value: countryCode },
-      region: { value: regionId },
-      city: { value: request.cf?.city || 'unknown' },
-      continent: { value: request.cf?.continent || 'unknown' }
-    },
-    // The list of events to log
     events: [
       {
-        name: "short_link_access", // The name of your custom event in GA4
+        name: "short_link_access",
         params: {
-          // You can pass custom dimensions here. Make sure they are set up in your GA4 property.
+          // Geo-location data should be sent as event parameters
+          country: countryCode,
+          region: regionId,
+          city: request.cf?.city || 'unknown',
+          continent: request.cf?.continent || 'unknown',
+          
+          // Custom dimensions
           link_short_code: shortCode,
           link_longUrl: longUrl,
+          
+          // Standard event parameters
           page_path: request.url,
           page_referrer: request.headers.get('Referer') || 'none',
           user_agent: userAgent,
           engagement_time_msec: "1",
           session_id: Date.now().toString(),
-          session_start: "true",
-          client_ip: userIp
+          debug_mode: true // Set to true for testing in GA4 DebugView
         }
       }
     ],
