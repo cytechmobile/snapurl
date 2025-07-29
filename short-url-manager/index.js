@@ -22,8 +22,7 @@ class URLShortenerTUI {
     console.log(chalk.blue.bold('🔗 URL Shortener Manager v1.0.0\n'));
     console.log(chalk.gray(`Worker URL: ${CONFIG.workerUrl}`));
     console.log(chalk.gray(`CSV File: ${path.resolve(CONFIG.csvFile)}\n`));
-    
-    await this.loadExistingMappings();
+    console.log(chalk.yellow('Mappings are not loaded automatically. Use "Refresh mappings from KV" to load them.\n'));
     await this.showMainMenu();
   }
 
