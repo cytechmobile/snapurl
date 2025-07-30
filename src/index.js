@@ -57,22 +57,21 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
       {
         name: "short_link_access",
         params: {
-          // Geo-location data should be sent as event parameters
+          // Geo-location data
           country: countryCode,
           region: regionId,
           city: request.cf?.city || 'unknown',
-          continent: request.cf?.continent || 'unknown',
           
-          // Custom dimensions
-          link_short_code: shortCode,
-          link_longUrl: longUrl,
-          
-          // Standard event parameters
-          page_path: request.url,
+          // Standard GA4 parameters
+          page_location: request.url,
           page_referrer: request.headers.get('Referer') || 'none',
           user_agent: userAgent,
-          engagement_time_msec: "1",
-          session_id: Date.now().toString()
+          engagement_time_msec: 1,
+          session_id: Date.now().toString(),
+
+          // Custom dimensions for your reports
+          link_short_code: shortCode,
+          link_longUrl: longUrl,
         }
       }
     ],
