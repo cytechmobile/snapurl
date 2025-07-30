@@ -42,15 +42,12 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
     return;
   }
 
-  // Get user's IP address (Cloudflare's way) to use as the user ID
   const userIp = request.headers.get('cf-connecting-ip') || 'unknown-ip';
   const userAgent = request.headers.get('User-Agent') || 'unknown-user-agent';
   const countryCode = request.cf?.country || 'unknown';
   const regionCodeRaw = request.cf?.regionCode || ''; // Get the raw region code, e.g., 'I'
   const regionId = (countryCode !== 'unknown' && regionCodeRaw !== '') ? `${countryCode}-${regionCodeRaw}` : 'unknown';
   
-  // Create a stable client_id by hashing the IP and User-Agent.
-  // This is crucial for GA4 to recognize sessions and attribute traffic.
   const uniqueIdentifier = `${userIp}-${userAgent}`;
   const encoder = new TextEncoder();
   const data = encoder.encode(uniqueIdentifier);
@@ -58,38 +55,29 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const clientId = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-  // Construct the GA4 event payload
   const gaPayload = {
     client_id: clientId,
-    uip: userIp, // Pass the user's IP for geo-lookup
     events: [
       {
         name: "short_link_access",
         params: {
-          // Geo-location data
           country: countryCode,
           region: regionId,
           city: request.cf?.city || 'unknown',
-          
-          // Standard GA4 parameters
           page_location: request.url,
           page_referrer: request.headers.get('Referer') || 'none',
           engagement_time_msec: 1,
-
-          // Custom dimensions for your reports
           request_hostname: new URL(request.url).hostname,
           link_short_code: shortCode,
           link_longUrl: longUrl,
-          debug_mode: true,
         }
       }
     ],
   };
 
   try {
-    // Temporarily use the debug endpoint for detailed validation
     const response = await fetch(
-      `https://www.google-analytics.com/debug/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
+      `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}&uip=${userIp}`,
       {
         method: "POST",
         headers: {
@@ -100,15 +88,11 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
       }
     );
 
-    // Log the full response from the debug endpoint
-    const responseText = await response.text();
-    console.log(`GA4 Debug Response Status: ${response.status}`);
-    console.log(`GA4 Debug Response Body: ${responseText}`);
-
     if (!response.ok) {
-      console.error(`Failed to send GA4 event: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Failed to send GA4 event: ${response.status} - ${errorText}`);
     } else {
-      console.log(`GA4 event for '${shortCode}' sent.`);
+      console.log(`GA4 event for '${shortCode}' sent successfully.`);
     }
 
   } catch (error) {
