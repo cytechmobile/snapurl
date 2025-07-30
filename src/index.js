@@ -70,6 +70,7 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
           session_id: Date.now().toString(),
 
           // Custom dimensions for your reports
+          request_hostname: new URL(request.url).hostname,
           link_short_code: shortCode,
           link_longUrl: longUrl,
         }
