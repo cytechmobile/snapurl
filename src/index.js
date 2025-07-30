@@ -65,7 +65,6 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
           // Standard GA4 parameters
           page_location: request.url,
           page_referrer: request.headers.get('Referer') || 'none',
-          user_agent: userAgent,
           engagement_time_msec: 1,
           session_id: Date.now().toString(),
 
@@ -85,6 +84,7 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "User-Agent": userAgent, // Set the User-Agent header correctly
         },
         body: JSON.stringify(gaPayload),
       }
