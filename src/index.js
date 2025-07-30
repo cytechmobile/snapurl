@@ -80,14 +80,16 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
           request_hostname: new URL(request.url).hostname,
           link_short_code: shortCode,
           link_longUrl: longUrl,
+          debug_mode: true,
         }
       }
     ],
   };
 
   try {
+    // Temporarily use the debug endpoint for detailed validation
     const response = await fetch(
-      `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
+      `https://www.google-analytics.com/debug/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
       {
         method: "POST",
         headers: {
@@ -98,13 +100,15 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
       }
     );
 
-    // For debugging, you can check the response status
+    // Log the full response from the debug endpoint
+    const responseText = await response.text();
+    console.log(`GA4 Debug Response Status: ${response.status}`);
+    console.log(`GA4 Debug Response Body: ${responseText}`);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Failed to send GA4 event: ${response.status} - ${errorText}`);
+      console.error(`Failed to send GA4 event: ${response.status}`);
     } else {
-      console.log(`GA4 event for '${shortCode}' sent successfully.`);
-      console.log(`GAPAYLOD: '${JSON.stringify(gaPayload)}' sent successfully.`);
+      console.log(`GA4 event for '${shortCode}' sent.`);
     }
 
   } catch (error) {
