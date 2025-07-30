@@ -91,9 +91,12 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": userAgent, // Set the User-Agent header correctly
+          "User-Agent": userAgent,
         },
-        body: JSON.stringify(gaPayload),
+        body: JSON.stringify({
+          ...gaPayload,
+          uip: userIp, // Pass the user's IP for geo-lookup
+        }),
       }
     );
 
