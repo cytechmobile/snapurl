@@ -61,6 +61,7 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
   // Construct the GA4 event payload
   const gaPayload = {
     client_id: clientId,
+    uip: userIp, // Pass the user's IP for geo-lookup
     events: [
       {
         name: "short_link_access",
@@ -93,10 +94,7 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
           "Content-Type": "application/json",
           "User-Agent": userAgent,
         },
-        body: JSON.stringify({
-          ...gaPayload,
-          uip: userIp, // Pass the user's IP for geo-lookup
-        }),
+        body: JSON.stringify(gaPayload),
       }
     );
 
