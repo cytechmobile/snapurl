@@ -48,7 +48,15 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
   const countryCode = request.cf?.country || 'unknown';
   const regionCodeRaw = request.cf?.regionCode || ''; // Get the raw region code, e.g., 'I'
   const regionId = (countryCode !== 'unknown' && regionCodeRaw !== '') ? `${countryCode}-${regionCodeRaw}` : 'unknown';
-  const clientId = crypto.randomUUID(); // This generates a V4 UUID (e.g., "a1b2c3d4-e5f6-7890-1234-567890abcdef")
+  
+  // Create a stable client_id by hashing the IP and User-Agent.
+  // This is crucial for GA4 to recognize sessions and attribute traffic.
+  const uniqueIdentifier = `${userIp}-${userAgent}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(uniqueIdentifier);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const clientId = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
   // Construct the GA4 event payload
   const gaPayload = {
@@ -66,7 +74,6 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
           page_location: request.url,
           page_referrer: request.headers.get('Referer') || 'none',
           engagement_time_msec: 1,
-          session_id: Date.now().toString(),
 
           // Custom dimensions for your reports
           request_hostname: new URL(request.url).hostname,
