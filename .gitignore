@@ -173,3 +173,4 @@ dist
 url-mappings.csv
 package-lock.json
 wrangler.jsonc
+\n# Editor Files\n*.swp
