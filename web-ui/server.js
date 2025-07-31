@@ -17,16 +17,17 @@ try {
   const wranglerConfigPath = path.join(projectRoot, 'wrangler.jsonc');
   const wranglerConfig = fs.readFileSync(wranglerConfigPath, 'utf8');
   // A simple regex to strip comments, as JSON.parse can't handle them.
-  const jsonc = wranglerConfig.replace(/\"|"(?:\"|[^"])*"|(\/{2}.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? "" : m);
+  const jsonc = wranglerConfig.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? "" : m);
   const config = JSON.parse(jsonc);
   
-  const kvBinding = config.kv_namespaces?.find(kv => kv.binding === 'racket_shortener');
+  // Dynamically use the *first* KV namespace defined in the config.
+  const kvBinding = config.kv_namespaces?.[0];
   
   if (!kvBinding || !kvBinding.id) {
-    throw new Error("Could not find a KV namespace binding named 'racket_shortener' with an 'id' in wrangler.jsonc");
+    throw new Error("Could not find a valid KV namespace binding in wrangler.jsonc. Please ensure at least one is defined with an 'id'.");
   }
   WRANGLER_NAMESPACE_ID = kvBinding.id;
-  console.log(`Successfully loaded KV Namespace ID: ${WRANGLER_NAMESPACE_ID}`);
+  console.log(`Successfully loaded KV Namespace ID: ${WRANGLER_NAMESPACE_ID} (from binding '${kvBinding.binding}')`);
 } catch (error) {
   console.error("FATAL: Could not load configuration from wrangler.jsonc.", error);
   process.exit(1); // Exit if configuration is missing.
