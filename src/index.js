@@ -57,6 +57,10 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl, utmParams = 
 
   const userIp = request.headers.get('cf-connecting-ip') || 'unknown-ip';
   const userAgent = request.headers.get('User-Agent') || 'unknown-user-agent';
+  const countryCode = request.cf?.country || 'unknown';
+  const regionCodeRaw = request.cf?.regionCode || ''; // Get the raw region code, e.g., 'I'
+  const regionId = (countryCode !== 'unknown' && regionCodeRaw !== '') ? `${countryCode}-${regionCodeRaw}` : 'unknown';
+  const city = request.cf?.city || 'unknown';
   
   const uniqueIdentifier = `${userIp}-${userAgent}`;
   const encoder = new TextEncoder();
@@ -79,6 +83,11 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl, utmParams = 
           source: utmParams.utm_source,
           medium: utmParams.utm_medium,
           campaign: utmParams.utm_campaign,
+
+          // Geo-location data (for custom reports)
+          country: countryCode,
+          region: regionId,
+          city: city,
 
           // Custom dimensions
           request_hostname: new URL(request.url).hostname,
