@@ -59,15 +59,15 @@ function App() {
     }
   };
 
-  const handleCreate = async (longUrl, customShortCode) => {
+  const handleCreate = async (formData) => {
     setIsLoading(true);
-    const shortCode = customShortCode || nanoid(6);
-
+    const shortCode = formData.customShortCode || nanoid(6);
+    
     try {
       const response = await fetch(`${API_BASE_URL}/mappings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shortCode, longUrl }),
+        body: JSON.stringify({ shortCode, ...formData }),
       });
       const result = await response.json();
       if (!result.success) {
@@ -179,35 +179,45 @@ const MappingTable = ({ mappings, onDelete }) => {
 };
 
 const CreateModal = ({ onClose, onCreate, existingShortCodes }) => {
-  const [longUrl, setLongUrl] = useState('');
-  const [customShortCode, setCustomShortCode] = useState('');
+  const [formData, setFormData] = useState({
+    longUrl: '',
+    customShortCode: '',
+    utm_source: '',
+    utm_medium: '',
+    utm_campaign: '',
+  });
   const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    if (!longUrl) {
+    if (!formData.longUrl) {
       setError('Long URL cannot be empty.');
       return;
     }
-    if (!longUrl.startsWith('http://') && !longUrl.startsWith('https://')) {
+    if (!formData.longUrl.startsWith('http://') && !formData.longUrl.startsWith('https://')) {
       setError('URL must start with http:// or https://');
       return;
     }
-    if (customShortCode && !/^[a-zA-Z0-9_-]+$/.test(customShortCode)) {
+    if (formData.customShortCode && !/^[a-zA-Z0-9_-]+$/.test(formData.customShortCode)) {
       setError('Short code can only contain letters, numbers, hyphens, and underscores.');
       return;
     }
-    if (existingShortCodes.includes(customShortCode)) {
+    if (existingShortCodes.includes(formData.customShortCode)) {
       setError('This short code already exists.');
       return;
     }
-    onCreate(longUrl, customShortCode);
+    onCreate(formData);
   };
 
   return (
     <div className="modal show d-block" tabIndex="-1">
-      <div className="modal-dialog">
+      <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">Create New Short URL</h5>
@@ -222,8 +232,8 @@ const CreateModal = ({ onClose, onCreate, existingShortCodes }) => {
                   type="url"
                   className="form-control"
                   id="longUrl"
-                  value={longUrl}
-                  onChange={e => setLongUrl(e.target.value)}
+                  value={formData.longUrl}
+                  onChange={handleChange}
                   placeholder="https://example.com/my-very-long-url"
                   required
                 />
@@ -234,10 +244,26 @@ const CreateModal = ({ onClose, onCreate, existingShortCodes }) => {
                   type="text"
                   className="form-control"
                   id="customShortCode"
-                  value={customShortCode}
-                  onChange={e => setCustomShortCode(e.target.value)}
+                  value={formData.customShortCode}
+                  onChange={handleChange}
                   placeholder="my-custom-code (or leave blank)"
                 />
+              </div>
+              <hr />
+              <h6 className="text-muted">UTM Parameters (Optional)</h6>
+              <div className="row">
+                <div className="col-md-4 mb-3">
+                  <label htmlFor="utm_source" className="form-label">UTM Source</label>
+                  <input type="text" className="form-control" id="utm_source" value={formData.utm_source} onChange={handleChange} placeholder="e.g., google" />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label htmlFor="utm_medium" className="form-label">UTM Medium</label>
+                  <input type="text" className="form-control" id="utm_medium" value={formData.utm_medium} onChange={handleChange} placeholder="e.g., cpc" />
+                </div>
+                <div className="col-md-4 mb-3">
+                  <label htmlFor="utm_campaign" className="form-label">UTM Campaign</label>
+                  <input type="text" className="form-control" id="utm_campaign" value={formData.utm_campaign} onChange={handleChange} placeholder="e.g., summer_sale" />
+                </div>
               </div>
               <div className="d-flex justify-content-end">
                 <button type="button" className="btn btn-secondary me-2" onClick={onClose}>Cancel</button>
