@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import * as QRCode from 'qrcode.react';
+const QRCode = require('qrcode.react');
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -286,7 +286,7 @@ const CreateModal = ({ onClose, onCreate, existingShortCodes }) => {
               </div>
               <div className="d-flex justify-content-end">
                 <button type="button" className="btn btn-secondary me-2" onClick={onClose}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Create</button>
+                <button type="submit" className="btn btn.primary">Create</button>
               </div>
             </form>
           </div>
@@ -305,7 +305,7 @@ const QrCodeModal = ({ url, onClose }) => (
           <button type="button" className="btn-close" onClick={onClose}></button>
         </div>
         <div className="modal-body text-center">
-          <QRCode.default value={url} size={256} />
+          <QRCode value={url} size={256} />
           <p className="mt-3 font-monospace">{url}</p>
         </div>
         <div className="modal-footer">
