@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { nanoid } from 'nanoid';
+import * as QRCode from 'qrcode.react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 const API_BASE_URL = 'http://localhost:3001/api';
+const WORKER_URL = 'https://racket-link-shortener.hostmaster-c9c.workers.dev'; // Base URL for short links
 
 function App() {
   const [mappings, setMappings] = useState([]);
@@ -11,6 +13,7 @@ function App() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [qrCodeValue, setQrCodeValue] = useState(null); // State for QR code modal
 
   // Fetch mappings from the local server
   const fetchMappings = async (force = false) => {
@@ -84,7 +87,7 @@ function App() {
   const filteredMappings = useMemo(() => {
     return mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.longUrl.toLowerCase().includes(searchTerm.toLowerCase())
+      (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [mappings, searchTerm]);
 
@@ -101,7 +104,11 @@ function App() {
         {error && <div className="alert alert-danger mt-3"><strong>Error:</strong> {error}</div>}
         {isLoading && <Spinner />}
         {!isLoading && !error && (
-          <MappingTable mappings={filteredMappings} onDelete={handleDelete} />
+          <MappingTable 
+            mappings={filteredMappings} 
+            onDelete={handleDelete}
+            onShowQrCode={setQrCodeValue} 
+          />
         )}
       </main>
       {showCreateModal && (
@@ -109,6 +116,12 @@ function App() {
           onClose={() => setShowCreateModal(false)} 
           onCreate={handleCreate}
           existingShortCodes={mappings.map(m => m.shortCode)}
+        />
+      )}
+      {qrCodeValue && (
+        <QrCodeModal 
+          url={qrCodeValue}
+          onClose={() => setQrCodeValue(null)}
         />
       )}
     </div>
@@ -144,7 +157,7 @@ const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange 
   </div>
 );
 
-const MappingTable = ({ mappings, onDelete }) => {
+const MappingTable = ({ mappings, onDelete, onShowQrCode }) => {
   if (mappings.length === 0) {
     return <div className="alert alert-info">No URL mappings found.</div>;
   }
@@ -166,6 +179,12 @@ const MappingTable = ({ mappings, onDelete }) => {
                 <a href={longUrl} target="_blank" rel="noopener noreferrer">{longUrl}</a>
               </td>
               <td className="text-end">
+                <button 
+                  className="btn btn-outline-secondary btn-sm me-2" 
+                  onClick={() => onShowQrCode(`${WORKER_URL}/${shortCode}`)}
+                >
+                  QR
+                </button>
                 <button className="btn btn-danger btn-sm" onClick={() => onDelete(shortCode)}>
                   Delete
                 </button>
@@ -276,6 +295,26 @@ const CreateModal = ({ onClose, onCreate, existingShortCodes }) => {
     </div>
   );
 };
+
+const QrCodeModal = ({ url, onClose }) => (
+  <div className="modal show d-block" tabIndex="-1">
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">QR Code</h5>
+          <button type="button" className="btn-close" onClick={onClose}></button>
+        </div>
+        <div className="modal-body text-center">
+          <QRCode.default value={url} size={256} />
+          <p className="mt-3 font-monospace">{url}</p>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const Spinner = () => (
   <div className="loading-spinner">
