@@ -56,3 +56,4 @@ Navigate to the `web-ui` directory and start the server.
 node server.js
 ```
 The server will now handle everything. You can access the application by opening your browser to **http://localhost:3001**.
+<img width="1049" height="927" alt="Screenshot 2025-07-31 at 09 18 13" src="https://github.com/user-attachments/assets/fc8cfb81-3158-47e6-9f3b-c95bbad2037f" />
