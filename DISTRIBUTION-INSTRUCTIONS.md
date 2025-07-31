@@ -1,73 +1,94 @@
-# How to Distribute the Racket URL Manager
+# Distribution and Installation Guide
 
-## Ready-to-Send Package
+This application is a **local management tool** with a web interface. It is not designed to be deployed on a public web server. It must be run on your local machine to securely interact with your Cloudflare account via the `wrangler` command-line tool.
 
-✅ **`short-url-manager-v1.0.zip`** - Complete standalone package ready for distribution
+## What to Distribute
 
-## What's Included in the Package
+To share this application, create a `.zip` archive of the entire project directory, but be sure to **exclude** all `node_modules` folders. The person you send it to will install these dependencies themselves.
 
-- 📱 **Complete TUI application** (index.js, package.json)
-- 📖 **Full documentation** (README.md, DISTRIBUTION.md)
-- 🔧 **Setup scripts** (setup.sh for Linux/Mac, setup.bat for Windows)
-- ⚙️ **Cloudflare configuration** (wrangler.jsonc with your account/namespace IDs)
+The recipient should receive:
+- `web-ui/` (including the `client/` sub-directory)
+- `short-url-manager/`
+- `src/`
+- `package.json`
+- `wrangler.jsonc`
+- and all other project configuration files.
 
-## How to Share
+## Prerequisites
 
-### Option 1: Direct File Sharing
-Send the `short-url-manager-v1.0.zip` file directly to team members via:
-- Email attachment
-- File sharing service (Google Drive, Dropbox, etc.)
-- Internal company file share
+Before you begin, you must have the following installed on your computer:
 
-### Option 2: Simple Instructions for Recipients
+1.  **Node.js and npm:** [Download from the official Node.js website](https://nodejs.org/).
+2.  **Cloudflare Wrangler:** Install it globally by running this command in your terminal:
+    ```bash
+    npm install -g wrangler
+    ```
 
-Send this message along with the zip file:
+## Installation and Setup
 
----
+### Step 1: Authenticate with Cloudflare
 
-**🔗 Racket URL Manager Setup**
+You must log in to your Cloudflare account so `wrangler` can manage your KV namespaces. You only need to do this once.
 
-1. **Download and extract:** `short-url-manager-v1.0.zip`
-2. **Open terminal/command prompt** in the extracted folder
-3. **Run setup:**
-   - Linux/Mac: `./setup.sh`
-   - Windows: `setup.bat`
-4. **Start the app:** `npm start`
+Choose **one** of the following methods:
 
-**Requirements:**
-- Node.js 18+ ([download here](https://nodejs.org/))
-- Cloudflare account access to short-url-shortener project
-
-The setup script will handle everything else automatically!
-
----
-
-## Security Features
-
-✅ **No public endpoints** - All operations use authenticated Wrangler CLI  
-✅ **Individual authentication** - Each user must log into their own Cloudflare account  
-✅ **Account-based access control** - Only authorized team members can use it  
-✅ **Audit trail** - All operations logged in Cloudflare  
-
-## Package Contents Summary
-
-```
-short-url-manager-distribution/
-├── index.js           # Main TUI application
-├── package.json       # Dependencies & scripts
-├── README.md          # Complete usage guide
-├── wrangler.jsonc     # Cloudflare config
-├── setup.sh           # Auto-setup (Linux/Mac)
-├── setup.bat          # Auto-setup (Windows)
-└── DISTRIBUTION.md    # Setup instructions
+**Method A: Browser Login (Recommended for most users)**
+Run the following command and follow the instructions to log in via your web browser:
+```bash
+wrangler login
 ```
 
-## Troubleshooting for Recipients
+**Method B: API Token (More secure for automated environments)**
+1.  Create a Cloudflare API Token with the "Edit Cloudflare Workers" template.
+2.  Set the following environment variables in your terminal, replacing the values with your own credentials:
+    ```bash
+    export CLOUDFLARE_ACCOUNT_ID="your_account_id_here"
+    export CLOUDFLARE_API_TOKEN="your_api_token_here"
+    ```
 
-Common setup issues and solutions are documented in the package's README.md file.
+### Step 2: Install Dependencies
 
----
+Navigate to the project's root directory in your terminal and run the following commands to install the necessary packages for both the server and the client UI.
 
-**Package Version:** 1.0.0  
-**Package Size:** ~10KB  
-**Ready to distribute!** 🚀
+1.  **Install Server Dependencies:**
+    ```bash
+    # Make sure you are in the web-ui/ directory
+    cd web-ui
+    npm install
+    ```
+
+2.  **Install Client Dependencies:**
+    ```bash
+    # Make sure you are in the web-ui/client/ directory
+    cd client
+    npm install
+    ```
+
+### Step 3: Build the User Interface
+
+The web interface needs to be compiled into optimized, static files.
+
+```bash
+# Make sure you are in the web-ui/client/ directory
+npm run build
+```
+This will create a `dist` folder inside `web-ui/client`.
+
+## Running the Application
+
+To run the application, you only need to start the local server. It will handle both the backend API and serving the user interface you just built.
+
+1.  Navigate to the `web-ui` directory:
+    ```bash
+    # If you are in web-ui/client, go up one level
+    cd .. 
+    ```
+
+2.  Start the server:
+    ```bash
+    node server.js
+    ```
+
+The server will now be running. You can access the URL Shortener Manager by opening your web browser and navigating to:
+
+**http://localhost:3001**

@@ -1,0 +1,115 @@
+const express = require('express');
+const { execSync } = require('child_process');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+
+const app = express();
+const port = 3001;
+
+// --- Config ---
+const projectRoot = path.resolve(__dirname, '..');
+const csvPath = path.join(projectRoot, 'url-mappings.csv');
+const WRANGLER_NAMESPACE_ID = 'bb0b757c25914a818f3d0c146371d780';
+const clientBuildPath = path.join(__dirname, 'client', 'dist');
+
+// --- Middleware ---
+app.use(cors());
+app.use(express.json());
+
+// --- Wrangler Helpers ---
+const runWrangler = (command) => {
+  try {
+    const fullCommand = `${command} --remote --config wrangler.jsonc`;
+    const output = execSync(fullCommand, { encoding: 'utf8', cwd: projectRoot });
+    return { success: true, data: output };
+  } catch (error) {
+    return { success: false, error: error.stderr || error.message };
+  }
+};
+
+const fetchFromKVAndCache = async () => {
+  const listCommand = `wrangler kv key list --namespace-id ${WRANGLER_NAMESPACE_ID}`;
+  const listResult = runWrangler(listCommand);
+  if (!listResult.success) throw new Error('Failed to list keys from Cloudflare KV.');
+  const keys = JSON.parse(listResult.data);
+  if (!Array.isArray(keys)) throw new Error('Wrangler returned an unexpected format for keys.');
+  const mappings = [];
+  for (const key of keys) {
+    const getCommand = `wrangler kv key get "${key.name}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
+    const getResult = runWrangler(getCommand);
+    if (getResult.success) {
+      mappings.push({ shortCode: key.name, longUrl: getResult.data.trim() });
+    }
+  }
+  const csvContent = ['Short URL,Long URL', ...mappings.map(m => `${m.shortCode},${m.longUrl}`)];
+  fs.writeFileSync(csvPath, csvContent.join('\n'));
+  return mappings;
+};
+
+// --- API Routes ---
+const apiRouter = express.Router();
+apiRouter.get('/mappings', async (req, res) => {
+  const forceRefresh = req.query.force === 'true';
+  if (!forceRefresh && fs.existsSync(csvPath)) {
+    const csvContent = fs.readFileSync(csvPath, 'utf8');
+    const lines = csvContent.split('\n').slice(1);
+    const mappings = lines.map(line => {
+      const [shortCode, longUrl] = line.split(',');
+      return { shortCode, longUrl };
+    }).filter(m => m.shortCode && m.longUrl);
+    return res.json({ success: true, data: mappings });
+  }
+  try {
+    const mappings = await fetchFromKVAndCache();
+    res.json({ success: true, data: mappings });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+apiRouter.post('/mappings', async (req, res) => {
+  const { shortCode, longUrl } = req.body;
+  if (!shortCode || !longUrl) return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
+  const command = `wrangler kv key put "${shortCode}" "${longUrl}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
+  const result = runWrangler(command);
+  if (result.success) {
+    await fetchFromKVAndCache();
+    res.status(201).json({ success: true, data: { shortCode, longUrl } });
+  } else {
+    res.status(500).json({ success: false, error: `Failed to create short URL: ${result.error}` });
+  }
+});
+apiRouter.delete('/mappings/:shortCode', async (req, res) => {
+  const { shortCode } = req.params;
+  if (!shortCode) return res.status(400).json({ success: false, error: 'Short code is required.' });
+  const command = `wrangler kv key delete "${shortCode}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
+  const result = runWrangler(command);
+  if (result.success) {
+    await fetchFromKVAndCache();
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, error: `Failed to delete short URL: ${result.error}` });
+  }
+});
+app.use('/api', apiRouter);
+
+// --- Frontend Serving ---
+app.use(express.static(clientBuildPath));
+
+// --- Final Fallback Middleware (replaces the problematic app.get('*')) ---
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api/') && !path.extname(req.path)) {
+    res.sendFile(path.join(clientBuildPath, 'index.html'), (err) => {
+      if (err) {
+        res.status(500).send(err);
+      }
+    });
+  } else {
+    next();
+  }
+});
+
+// --- Start Server ---
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
