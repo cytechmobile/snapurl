@@ -7,11 +7,30 @@ const fs = require('fs');
 const app = express();
 const port = 3001;
 
-// --- Config ---
 const projectRoot = path.resolve(__dirname, '..');
 const csvPath = path.join(projectRoot, 'url-mappings.csv');
-const WRANGLER_NAMESPACE_ID = 'bb0b757c25914a818f3d0c146371d780';
 const clientBuildPath = path.join(__dirname, 'client', 'dist');
+
+// --- Dynamic Configuration ---
+let WRANGLER_NAMESPACE_ID;
+try {
+  const wranglerConfigPath = path.join(projectRoot, 'wrangler.jsonc');
+  const wranglerConfig = fs.readFileSync(wranglerConfigPath, 'utf8');
+  // A simple regex to strip comments, as JSON.parse can't handle them.
+  const jsonc = wranglerConfig.replace(/\"|"(?:\"|[^"])*"|(\/{2}.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? "" : m);
+  const config = JSON.parse(jsonc);
+  
+  const kvBinding = config.kv_namespaces?.find(kv => kv.binding === 'racket_shortener');
+  
+  if (!kvBinding || !kvBinding.id) {
+    throw new Error("Could not find a KV namespace binding named 'racket_shortener' with an 'id' in wrangler.jsonc");
+  }
+  WRANGLER_NAMESPACE_ID = kvBinding.id;
+  console.log(`Successfully loaded KV Namespace ID: ${WRANGLER_NAMESPACE_ID}`);
+} catch (error) {
+  console.error("FATAL: Could not load configuration from wrangler.jsonc.", error);
+  process.exit(1); // Exit if configuration is missing.
+}
 
 // --- Middleware ---
 app.use(cors());
