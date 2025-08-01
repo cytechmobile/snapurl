@@ -177,7 +177,10 @@ function App() {
           onRefresh={() => fetchMappings(true)} 
           onShowCreateModal={handleShowCreateModal}
           searchTerm={searchTerm}
-          onSearchTermChange={e => setSearchTerm(e.target.value)}
+          onSearchTermChange={e => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1); // Reset to first page on search term change
+          }}
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={(e) => {
             setItemsPerPage(Number(e.target.value));
