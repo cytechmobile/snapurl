@@ -144,24 +144,22 @@ function App() {
     }
   };
 
-  const filteredMappings = useMemo(() => {
-    const filtered = mappings.filter(m =>
+  const searchedMappings = useMemo(() => {
+    return mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-    // Apply pagination
+  }, [mappings, searchTerm]);
+
+  const filteredMappings = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return filtered.slice(startIndex, endIndex);
-  }, [mappings, searchTerm, currentPage, itemsPerPage]);
+    return searchedMappings.slice(startIndex, endIndex);
+  }, [searchedMappings, currentPage, itemsPerPage]);
 
   const totalPages = useMemo(() => {
-    const filteredCount = mappings.filter(m =>
-      m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
-    ).length;
-    return Math.ceil(filteredCount / itemsPerPage);
-  }, [mappings, searchTerm, itemsPerPage]);
+    return Math.ceil(searchedMappings.length / itemsPerPage);
+  }, [searchedMappings, itemsPerPage]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
