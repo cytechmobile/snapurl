@@ -215,7 +215,7 @@ const SettingsBar = ({ host, onHostChange }) => (
 );
 
 const Header = () => (
-  <AppBar position="static" sx={{ mb: 3 }}>
+  <AppBar position="static" sx={{ mb: 3, boxShadow: 3 }}>
     <MuiToolbar>
       <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
         🔗 URL Shortener Manager
@@ -353,7 +353,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>{isEditMode ? 'Edit Short URL' : 'Create New Short URL'}</DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: 3, boxShadow: 1 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <form onSubmit={handleSubmit}>
           <fieldset disabled={isSubmitting}>
