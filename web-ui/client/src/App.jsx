@@ -149,7 +149,7 @@ function App() {
     }
   };
 
-  const filteredMappings = useMemo(() => {
+  const filteredAndSortedMappings = useMemo(() => {
     const filtered = mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -164,11 +164,14 @@ function App() {
         return 0;
       });
     }
+    return filtered;
+  }, [mappings, searchTerm, sortColumn, sortDirection]);
 
+  const paginatedMappings = useMemo(() => {
     const startIndex = page * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return filtered.slice(startIndex, endIndex);
-  }, [mappings, searchTerm, page, rowsPerPage, sortColumn, sortDirection]);
+    return filteredAndSortedMappings.slice(startIndex, endIndex);
+  }, [filteredAndSortedMappings, page, rowsPerPage]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -206,13 +209,13 @@ function App() {
         {isLoading && <Spinner />}
         {!isLoading && !error && (
           <MappingTable 
-            mappings={filteredMappings} 
+            mappings={paginatedMappings} 
             onDelete={handleDelete}
             onEdit={handleShowEditModal}
             onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)} 
             page={page}
             rowsPerPage={rowsPerPage}
-            totalMappings={mappings.length}
+            totalMappings={filteredAndSortedMappings.length}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             sortColumn={sortColumn}
