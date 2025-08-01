@@ -13,161 +13,83 @@ A high-performance URL shortener implemented using Cloudflare Workers and Cloudf
   * **Cloudflare Workers Analytics Engine:** Built-in integration for logging event data (short code accessed, country, user agent) for scalable, real-time analytics within the Cloudflare dashboard.  
   * **Google Analytics 4 (GA4) Measurement Protocol:** Option to send detailed event data (including geographical information like country, region, and city) directly to your GA4 property for comprehensive tracking.  
 
-## **Technologies Used**
+## Management Interfaces
 
-* **Cloudflare Workers:** Serverless execution environment at the edge.  
-* **Cloudflare KV:** Distributed key-value store for URL mappings.  
-* **Wrangler CLI:** Cloudflare's command-line tool for Workers development and deployment.  
-* **nanoid:** For generating short, unique IDs (used by the TUI for auto-generated codes).  
-* **Google Analytics 4 (GA4) Measurement Protocol (Optional):** For external analytics.
+You can manage your short links using two provided tools:
 
-## **Setup and Deployment**
+1.  **Web UI (Recommended):** A user-friendly, local web interface for creating, deleting, and viewing links, complete with QR code generation. See the [Web UI README](./web-ui/README.md) for setup instructions.
+2.  **TUI (Terminal UI):** A command-line interface for managing links directly from your terminal. See the [TUI README](./short-url-manager/README.md) for details.
 
-### **Prerequisites**
+## Core Setup (Cloudflare Worker)
 
-1. **Cloudflare Account:** An active Cloudflare account.  
-2. **Domain:** A domain registered and managed by Cloudflare DNS. You'll typically use a subdomain (e.g., s.yourdomain.com) for your short links.  
-3. **Node.js & npm/yarn:** Ensure you have Node.js installed on your local machine.
+This section covers the one-time setup for the Cloudflare Worker that powers the redirection service.
 
-### **Installation**
+### Prerequisites
 
-1. **Install Wrangler CLI:**  
-   ```Bash  
-   npm install -g wrangler
-   ```
+1.  **Cloudflare Account:** An active Cloudflare account.
+2.  **Domain:** A domain registered and managed by Cloudflare DNS. You'll typically use a subdomain (e.g., `s.yourdomain.com`) for your short links.
+3.  **Node.js & npm:** Ensure you have Node.js installed on your local machine.
 
-2. **Log in to Cloudflare via Wrangler:**  
-   ```Bash  
-   wrangler login
-   ```
+### Installation & Configuration
 
-   Follow the prompts to authenticate.  
-3. Create a new Worker project:  
-   If you haven't already, create your project directory and initialize the Worker.  
-   ```Bash  
-   wrangler init my-link-shortener  
-   cd my-link-shortener
-   ```
+1.  **Install Wrangler CLI:**
+    ```bash
+    npm install -g wrangler
+    ```
 
-   Choose the "Worker" template. Wrangler will generate src/index.js (or .ts) and wrangler.jsonc (or .toml).  
-4. Install nanoid:  
-   (Note: nanoid is primarily used by the short-url-manager TUI for generating short codes.)  
-   ```Bash  
-   npm install nanoid
-   ```
+2.  **Log in to Cloudflare:**
+    ```bash
+    wrangler login
+    ```
 
-### **Cloudflare KV Namespace Setup**
+3.  **Configure `wrangler.jsonc`:**
+    Open `wrangler.jsonc` and fill in your `account_id`. Then, create a KV namespace for your links by running:
+    ```bash
+    # This creates the production namespace
+    wrangler kv:namespace create "racket_shortener"
 
-Create two KV namespaces: one for production and one for development/preview.
+    # This creates a preview namespace for testing
+    wrangler kv:namespace create "racket_shortener" --preview
+    ```
+    Wrangler will output the `id` and `preview_id` for your new namespaces. **Copy these IDs** and paste them into the `kv_namespaces` section of your `wrangler.jsonc` file.
 
-```Bash
+4.  **Add Root Redirect URL:**
+    In `wrangler.jsonc`, add a `vars` section to specify where requests to the root of your shortener domain should redirect:
+    ```json
+    "vars": {
+      "ROOT_REDIRECT_URL": "https://your-main-website.com"
+    }
+    ```
 
-wrangler kv:namespace create SHORTENER_KV_PRODUCTION  
-wrangler kv:namespace create SHORTENER_KV_PREVIEW --preview
-```
-**Important:** Note the id values provided in the output for both namespaces. You will need them for wrangler.jsonc.
+5.  **(Optional) Configure Analytics Secrets:**
+    If you plan to use Google Analytics, store your credentials as encrypted secrets:
+    ```bash
+    wrangler secret put GOOGLE_ANALYTICS_MEASUREMENT_ID
+    wrangler secret put GOOGLE_ANALYTICS_API_SECRET
+    ```
 
-### **Configuration (wrangler.jsonc)**
+### Deployment
 
-Open your wrangler.jsonc file (or wrangler.toml if you chose TOML) and update it.  
-Key changes to make:
+1.  **Deploy the Worker:**
+    ```bash
+    wrangler deploy
+    ```
 
-* Remove the assets block: This ensures your Worker handles all requests and doesn't fall back to serving static files for the root path.  
-* Add KV Namespace Bindings: Use the id and preview_id from the previous step.  
-* Add Cloudflare Workers Analytics Engine Binding (Optional): If you want to use Cloudflare's built-in analytics.
+2.  **Set up a Custom Domain:**
+    For a professional look, use your own short domain (e.g., `s.yourdomain.com`):
+    *   Log in to your Cloudflare dashboard.
+    *   Go to **Workers & Pages** > Select your Worker.
+    *   Navigate to **Settings > Triggers > Custom Domains**.
+    *   Click "Add Custom Domain" and follow the instructions.
 
-**Example wrangler.jsonc:**
+## Usage
 
-```JSON
+Once the worker is deployed, use one of the [Management Interfaces](#management-interfaces) to create and manage your short links.
 
-{  
-  "$schema": "node_modules/wrangler/config-schema.json",  
-  "name": "my-link-shortener",  
-  "main": "src/index.js",  
-  "compatibility_date": "2025-07-05",
-		"account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID",
-  "compatibility_flags": [  
-    "nodejs_compat",  
-    "global_fetch_strictly_public"  
-  ],  
-  "observability": {  
-    "enabled": true  
-  },  
-  "kv_namespaces": [  
-    {  
-      "binding": "my_shortener_kv",  
-      "id": "YOUR_PRODUCTION_KV_NAMESPACE_ID",  
-      "preview_id": "YOUR_PREVIEW_KV_NAMESPACE_ID"  
-    }  
-  ],  
-  "analytics_engine_datasets": [  
-    {  
-      "binding": "ANALYTICS",  
-      "dataset": "link_shortener_events"  
-    }  
-  ]  
-}
-```
-Replace YOUR_PRODUCTION_KV_NAMESPACE_ID and YOUR_PREVIEW_KV_NAMESPACE_ID with the actual IDs from your wrangler kv:namespace create output.
+### Accessing Short Links
 
-### **Google Analytics 4 (GA4) Setup (Optional)**
+Visit your short URL in a browser (e.g., `https://s.yourdomain.com/my-link`). The Worker will redirect the user to the long URL.
 
-If you want to send data to GA4:
-
-1. **Get GA4 Measurement ID and API Secret:**  
-   * In your GA4 property, go to Admin > Data Streams > Web > Select your data stream.  
-   * Copy your **Measurement ID** (e.g., G-XXXXXXXXXX).  
-   * Under "Events", find "Measurement Protocol API secrets" and create a new secret, then copy the **API Secret**.
-
-2. **Store GA4 Credentials as Secrets:**
-     ```Bash
-     wrangler secret put GOOGLE_ANALYTICS_MEASUREMENT_ID
-     ```
-   Paste your Measurement ID when prompted
-
-   ```Bash
-   wrangler secret put GOOGLE_ANALYTICS_API_SECRET
-   ```
-   
-   Paste your API Secret when prompted** 
-
-### **Deployment**
-
-1. **Deploy your Worker:**  
-   ```Bash  
-   wrangler deploy
-   ```
-
-   This will deploy your Worker to Cloudflare, making it accessible via a workers.dev subdomain.  
-2. Set up a Custom Domain (Optional but Recommended):  
-   To use your own short domain (e.g., s.yourdomain.com):  
-   * Log in to your Cloudflare dashboard.  
-   * Go to Workers & Pages > Select your Worker.  
-   * Navigate to **Settings > Triggers > Custom Domains**.  
-   * Click "Add Custom Domain" and enter your desired subdomain (e.g., url.racket.gr). Cloudflare will handle DNS and SSL.
-
-### **Usage**
-
-#### **Creating Short Links**
-
-Short URLs for this service are managed using the short-url-manager Terminal User Interface (TUI) application or directly via the wrangler Command Line Interface (CLI).  
-
-***Using wrangler CLI (Manual Key-Value Pair Creation):***  
-You can manually add short URL mappings directly to your Cloudflare KV namespace using wrangler.
-
-```Bash
-
-wrangler kv:key put --namespace-id YOUR_PRODUCTION_KV_NAMESPACE_ID "your-short-code" "[https://your-long-url.com](https://your-long-url.com)"
-```
-
-Replace YOUR_PRODUCTION_KV_NAMESPACE_ID with your actual production KV namespace ID, "your-short-code" with your desired short URL path, and "[https://your-long-url.com](https://your-long-url.com)" with the destination URL.
-
-***Using short-url-manager TUI:***  
-Refer to the [short-url-manager/README.md](short-url-manager/README.md) file within your repository for detailed instructions on how to set up and use the TUI to create, list, and manage your short URLs.  
-
-#### **Accessing Short Links**
-
-Visit your short URL in a browser (e.g., [https://url.racket.gr/mycustomlink](https://url.racket.gr/mycustomlink)). The Worker will **redirect** the user to the longUrl.
 
 ### **Analytics**
 

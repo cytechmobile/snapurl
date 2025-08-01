@@ -3,9 +3,10 @@ const { execSync } = require('child_process');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 const projectRoot = path.resolve(__dirname, '..');
 const csvPath = path.join(projectRoot, 'url-mappings.csv');

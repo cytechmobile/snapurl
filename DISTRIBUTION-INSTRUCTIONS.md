@@ -46,30 +46,51 @@ wrangler login
     export CLOUDFLARE_API_TOKEN="your_api_token_here"
     ```
 
-### Step 2: Install Dependencies
+### Step 2: Configure the Application
+
+Before installing dependencies, you must create the necessary configuration files.
+
+1.  **Configure the Web UI Server:**
+    -   Navigate to the `web-ui/` directory.
+    -   Create a file named `.env`.
+    -   Add the following content, adjusting the port if needed:
+        ```
+        PORT=3001
+        ```
+
+2.  **Configure the Web UI Client:**
+    -   Navigate to the `web-ui/client/` directory.
+    -   Create a file named `.env`.
+    -   Add the following content, **replacing the `VITE_WORKER_URL` with the URL of your deployed Cloudflare Worker**:
+        ```
+        VITE_WORKER_URL=https://your-shortener.workers.dev
+        VITE_API_BASE_URL=http://localhost:3001/api
+        ```
+
+### Step 3: Install Dependencies
 
 Navigate to the project's root directory in your terminal and run the following commands to install the necessary packages for both the server and the client UI.
 
 1.  **Install Server Dependencies:**
     ```bash
-    # Make sure you are in the web-ui/ directory
+    # Navigate to the web-ui/ directory
     cd web-ui
     npm install
     ```
 
 2.  **Install Client Dependencies:**
     ```bash
-    # Make sure you are in the web-ui/client/ directory
+    # Navigate to the web-ui/client/ directory
     cd client
     npm install
     ```
 
-### Step 3: Build the User Interface
+### Step 4: Build the User Interface
 
 The web interface needs to be compiled into optimized, static files.
 
 ```bash
-# Make sure you are in the web-ui/client/ directory
+# From the web-ui/client/ directory
 npm run build
 ```
 This will create a `dist` folder inside `web-ui/client`.

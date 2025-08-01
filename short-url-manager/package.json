@@ -9,13 +9,19 @@
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": ["url-shortener", "tui", "cli", "terminal"],
+  "keywords": [
+    "url-shortener",
+    "tui",
+    "cli",
+    "terminal"
+  ],
   "author": "Racket.gr",
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "inquirer": "^12.8.2",
-    "chalk": "^5.4.1"
+    "chalk": "^5.4.1",
+    "dotenv": "^17.2.1",
+    "inquirer": "^12.8.2"
   },
   "engines": {
     "node": ">=18.0.0"

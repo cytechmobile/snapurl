@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { nanoid } from 'nanoid';
+import { QRCodeCanvas } from 'qrcode.react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const WORKER_URL_FALLBACK = import.meta.env.VITE_WORKER_URL || 'https://your-worker.workers.dev';
 
 function App() {
   const [mappings, setMappings] = useState([]);
@@ -11,6 +13,16 @@ function App() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [qrCodeValue, setQrCodeValue] = useState(null); // State for QR code modal
+  const [shortUrlHost, setShortUrlHost] = useState(
+    () => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK
+  );
+
+  // Effect to save the hostname to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('shortUrlHost', shortUrlHost);
+  }, [shortUrlHost]);
+
 
   // Fetch mappings from the local server
   const fetchMappings = async (force = false) => {
@@ -84,7 +96,7 @@ function App() {
   const filteredMappings = useMemo(() => {
     return mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.longUrl.toLowerCase().includes(searchTerm.toLowerCase())
+      (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [mappings, searchTerm]);
 
@@ -92,6 +104,10 @@ function App() {
     <div className="container">
       <Header />
       <main>
+        <SettingsBar
+          host={shortUrlHost}
+          onHostChange={(e) => setShortUrlHost(e.target.value)}
+        />
         <Toolbar 
           onRefresh={() => fetchMappings(true)} 
           onShowCreateModal={() => setShowCreateModal(true)}
@@ -101,7 +117,11 @@ function App() {
         {error && <div className="alert alert-danger mt-3"><strong>Error:</strong> {error}</div>}
         {isLoading && <Spinner />}
         {!isLoading && !error && (
-          <MappingTable mappings={filteredMappings} onDelete={handleDelete} />
+          <MappingTable 
+            mappings={filteredMappings} 
+            onDelete={handleDelete}
+            onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)} 
+          />
         )}
       </main>
       {showCreateModal && (
@@ -111,9 +131,35 @@ function App() {
           existingShortCodes={mappings.map(m => m.shortCode)}
         />
       )}
+      {qrCodeValue && (
+        <QrCodeModal 
+          url={qrCodeValue}
+          onClose={() => setQrCodeValue(null)}
+        />
+      )}
     </div>
   );
 }
+
+const SettingsBar = ({ host, onHostChange }) => (
+  <div className="mb-3 p-3 bg-light border rounded">
+    <div className="row align-items-center">
+      <div className="col-md-3">
+        <label htmlFor="shortUrlHost" className="form-label fw-bold">Short URL Hostname:</label>
+      </div>
+      <div className="col-md-9">
+        <input
+          type="text"
+          className="form-control form-control-sm font-monospace"
+          id="shortUrlHost"
+          value={host}
+          onChange={onHostChange}
+          placeholder="e.g., https://your-domain.com"
+        />
+      </div>
+    </div>
+  </div>
+);
 
 const Header = () => (
   <header className="text-center my-4">
@@ -124,13 +170,20 @@ const Header = () => (
 
 const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange }) => (
   <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 p-3 bg-light border rounded">
-    <div className="btn-toolbar">
-      <button className="btn btn-primary" onClick={onShowCreateModal}>
-        ➕ Create New
-      </button>
-      <button className="btn btn-secondary" onClick={onRefresh}>
-        🔄 Refresh
-      </button>
+    <div className="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+      <div className="btn-group me-2" role="group" aria-label="Actions group">
+        <button className="btn btn-primary" onClick={onShowCreateModal} title="Create New Short URL">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-lg" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+            <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+          </svg> Create New
+        </button>
+        <button className="btn btn-secondary" onClick={onRefresh} title="Refresh Mappings from Server">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-clockwise" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+            <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+          </svg> Refresh
+        </button>
+      </div>
     </div>
     <div className="ms-md-auto">
       <input
@@ -144,7 +197,7 @@ const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange 
   </div>
 );
 
-const MappingTable = ({ mappings, onDelete }) => {
+const MappingTable = ({ mappings, onDelete, onShowQrCode }) => {
   if (mappings.length === 0) {
     return <div className="alert alert-info">No URL mappings found.</div>;
   }
@@ -166,8 +219,24 @@ const MappingTable = ({ mappings, onDelete }) => {
                 <a href={longUrl} target="_blank" rel="noopener noreferrer">{longUrl}</a>
               </td>
               <td className="text-end">
-                <button className="btn btn-danger btn-sm" onClick={() => onDelete(shortCode)}>
-                  Delete
+                <button 
+                  className="btn btn-outline-secondary btn-sm me-2" 
+                  onClick={() => onShowQrCode(shortCode)}
+                  title="Show QR Code"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-qr-code-scan" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+                    <path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0v-3Zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5ZM.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5Zm15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5ZM4 4h1v1H4V4Z"/>
+                    <path d="M7 2H2v5h5V2ZM3 3h3v3H3V3Zm2 8H4v1h1v-1Z"/>
+                    <path d="M7 9H2v5h5V9Zm-4 1h3v3H3v-3Zm8-6h1v1h-1V4Z"/>
+                    <path d="M9 2h5v5H9V2Zm1 1v3h3V3h-3ZM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-1V8h-1V7h-1v1h-1v1H8Z"/>
+                    <path d="M12 9h2V8h-2v1Z"/>
+                  </svg>
+                </button>
+                <button className="btn btn-danger btn-sm" onClick={() => onDelete(shortCode)} title="Delete Short URL">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                  </svg>
                 </button>
               </td>
             </tr>
@@ -267,7 +336,7 @@ const CreateModal = ({ onClose, onCreate, existingShortCodes }) => {
               </div>
               <div className="d-flex justify-content-end">
                 <button type="button" className="btn btn-secondary me-2" onClick={onClose}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Create</button>
+                <button type="submit" className="btn btn.primary">Create</button>
               </div>
             </form>
           </div>
@@ -276,6 +345,26 @@ const CreateModal = ({ onClose, onCreate, existingShortCodes }) => {
     </div>
   );
 };
+
+const QrCodeModal = ({ url, onClose }) => (
+  <div className="modal show d-block" tabIndex="-1">
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">QR Code</h5>
+          <button type="button" className="btn-close" onClick={onClose}></button>
+        </div>
+        <div className="modal-body text-center">
+          <QRCodeCanvas value={url} size={256} />
+          <p className="mt-3 font-monospace">{url}</p>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const Spinner = () => (
   <div className="loading-spinner">
