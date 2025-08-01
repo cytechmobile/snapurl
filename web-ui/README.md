@@ -81,3 +81,32 @@ node server.js
 ```
 The server will now handle everything. You can access the application by opening your browser to **http://localhost:3001**.
 <img width="1049" height="927" alt="Screenshot 2025-07-31 at 09 18 13" src="https://github.com/user-attachments/assets/fc8cfb81-3158-47e6-9f3b-c95bbad2037f" />
+
+
+## Requirements
+
+-   Node.js 18.0.0 or higher
+-   **Wrangler CLI** installed and authenticated
+-   **Cloudflare account access** to the `my-link-shortener` project
+
+## Security Considerations
+
+-   This Web UI is designed for **local, authenticated use only**. It directly executes `wrangler` commands on your machine.
+-   **Do NOT expose this server to the public internet.** It does not have authentication mechanisms suitable for public access.
+-   Ensure your `wrangler` CLI is properly authenticated to your Cloudflare account (run `wrangler login`).
+
+## Troubleshooting
+
+-   **"Cannot find module 'express'" or similar:** Run `npm install` in both `web-ui/` and `web-ui/client/` directories.
+-   **"Wrangler command failed":** Ensure `wrangler` is installed globally (`npm install -g wrangler`) and you are authenticated (`wrangler login`). Check your Cloudflare permissions for the KV namespace.
+-   **"CSV file not found" warning:** This is normal on first run - the CSV file will be created automatically
+-   **Frontend not loading:** Verify both the API server and the React client are running (in development mode). In production mode, ensure the client has been built (`npm run build`) and the server is running.
+-   **CORS errors:** Ensure `VITE_API_BASE_URL` in `web-ui/client/.env` matches the `PORT` in `web-ui/.env` and the server's actual running port.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+
+---
+
+Built for Racket.gr URL Shortener 🔗

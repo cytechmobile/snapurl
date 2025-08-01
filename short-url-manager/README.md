@@ -6,6 +6,7 @@ A Terminal User Interface (TUI) for managing Racket URL Shortener mappings.
 
 - 📋 **List all URL mappings** - View all your short URLs and their destinations
 - ➕ **Create new short URLs** - Add new mappings with custom or auto-generated codes  
+- ❌ **Delete short URLs** - Remove existing short URL mappings
 - 🔍 **Search mappings** - Find URLs by searching short codes or long URLs
 - 💾 **Export to CSV** - Save all mappings to a spreadsheet-compatible file
 - ⚙️ **Configurable settings** - Customize worker URL and CSV file location
@@ -88,7 +89,7 @@ This TUI application connects directly to your Cloudflare KV storage using the W
 The application will look for and create these files in your current directory:
 
 - `url-mappings.csv` - Stores your URL mappings locally (auto-created/updated)
-- Uses Cloudflare KV namespace: `bb0b757c25914a818f3d0c146371d780`
+- Uses your configured Cloudflare KV namespace (defined in `wrangler.jsonc`)
 
 ## Authentication Setup
 
