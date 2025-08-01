@@ -39,29 +39,24 @@ npm install -g .
 short-url-manager
 ```
 
-## Usage
+## Configuration
 
-### Basic Usage
+The TUI is configured via a `.env` file in the `short-url-manager/` directory. Create this file by copying the example below:
 
-```bash
-npm start
+**.env file**
+```
+# The full URL of your deployed Cloudflare Worker
+RACKET_WORKER_URL=https://your-shortener.workers.dev
+
+# The local path to the CSV file for exports
+RACKET_CSV_FILE=./url-mappings.csv
 ```
 
-The TUI will start and guide you through the available options using an interactive menu.
-
-### Configuration
-
-You can customize the application using environment variables:
+You can also override these settings with environment variables at runtime:
 
 ```bash
 # Custom worker URL
-RACKET_WORKER_URL=https://your-worker.workers.dev npm start
-
-# Custom CSV file location  
-RACKET_CSV_FILE=./my-mappings.csv npm start
-
-# Both together
-RACKET_WORKER_URL=https://your-worker.workers.dev RACKET_CSV_FILE=./custom.csv npm start
+RACKET_WORKER_URL=https://another-worker.workers.dev npm start
 ```
 
 ### Menu Options

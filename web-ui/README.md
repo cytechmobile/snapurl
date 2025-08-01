@@ -2,38 +2,62 @@
 
 This directory contains a local-only web application that provides a graphical user interface (UI) for managing the Cloudflare URL Shortener. It is designed to be run on your local machine and acts as a more user-friendly alternative to the command-line TUI.
 
+## Features
+
+-   **Full CRUD Operations:** Create, read, update, and delete short links.
+-   **QR Code Generation:** Instantly generate a QR code for any short link.
+-   **Configurable Hostname:** Set your short link domain directly in the UI (persisted in browser storage).
+-   **UTM Parameter Support:** Add `utm_source`, `utm_medium`, and `utm_campaign` parameters when creating links.
+-   **Search and Refresh:** Easily find links and refresh the local cache from Cloudflare KV.
+
 ## How It Works
 
 This is not a traditional, public-facing web application. It consists of two main parts:
 
-1.  **Local API Server (`server.js`):** A lightweight [Express.js](https://expressjs.com/) server that runs on your machine. It listens for requests from the frontend and securely executes `wrangler` commands to interact with your Cloudflare KV namespace. This ensures no management functions are ever exposed to the internet.
-2.  **React Frontend (`client/`):** A modern [React](https://react.dev/) application built with [Vite](https://vitejs.dev/) that provides the user interface. It runs in your browser and communicates with the local API server.
+1.  **Local API Server (`server.js`):** A lightweight Express.js server that runs on your machine. It listens for requests from the frontend and securely executes `wrangler` commands to interact with your Cloudflare KV namespace.
+2.  **React Frontend (`client/`):** A modern React application built with Vite that provides the user interface. It runs in your browser and communicates with the local API server.
 
-## Technology Stack
+## Configuration
 
--   **Backend:** Node.js, Express.js
--   **Frontend:** React, Vite, Bootstrap
--   **Interaction with Cloudflare:** The server uses the `wrangler` CLI tool.
+Before running the application, you need to create two `.env` files.
 
----
+1.  **Server Configuration (`web-ui/.env`):**
+    Create a file named `.env` in the `web-ui/` directory with the following content:
+    ```
+    # The port for the local web UI server to run on.
+    PORT=3001
+    ```
+
+2.  **Client Configuration (`web-ui/client/.env`):**
+    Create a file named `.env` in the `web-ui/client/` directory with the following content:
+    ```
+    # The default URL for your Cloudflare Worker.
+    VITE_WORKER_URL=https://your-shortener.workers.dev
+
+    # The base URL for the local API server
+    VITE_API_BASE_URL=http://localhost:3001/api
+    ```
+    **Note:** The `VITE_` prefix is required by Vite.
 
 ## Development Mode
 
-In development mode, you run two separate processes: the API server and the Vite development server for the client. The Vite server provides features like Hot Module Replacement (HMR) for a better development experience.
+In development mode, you run two separate processes: the API server and the Vite development server for the client.
 
 **1. Start the API Server:**
 In a terminal, navigate to the `web-ui` directory and run:
 ```bash
+npm install
 node server.js
 ```
-The API server will start on `http://localhost:3001`.
+The API server will start on the port you defined in `.env` (e.g., `http://localhost:3001`).
 
 **2. Start the React Client:**
 In a *second* terminal, navigate to the `web-ui/client` directory and run:
 ```bash
+npm install
 npm run dev
 ```
-The client development server will typically start on `http://localhost:5173`. You can access the UI by opening this URL in your browser.
+The client development server will typically start on `http://localhost:5173`. Open this URL in your browser to use the application.
 
 ---
 

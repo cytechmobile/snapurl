@@ -5,10 +5,11 @@ import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import 'dotenv/config'; // Load environment variables from .env file
 
 // Configuration - can be overridden via environment variables
 const CONFIG = {
-  workerUrl: process.env.RACKET_WORKER_URL || 'https://racket-link-shortener.hostmaster-c9c.workers.dev',
+  workerUrl: process.env.RACKET_WORKER_URL || 'https://your-worker.workers.dev',
   csvFile: process.env.RACKET_CSV_FILE || './url-mappings.csv'
 };
 
