@@ -8,7 +8,8 @@ This directory contains a local-only web application that provides a graphical u
 -   **QR Code Generation:** Instantly generate a QR code for any short link.
 -   **Configurable Hostname:** Set your short link domain directly in the UI (persisted in browser storage).
 -   **UTM Parameter Support:** Add `utm_source`, `utm_medium`, and `utm_campaign` parameters when creating links.
--   **Search and Refresh:** Easily find links and refresh the local cache from Cloudflare KV.
+-   **Search and Refresh:** Easily find links across all pages and refresh the local cache from Cloudflare KV.
+-   **Pagination:** Navigate through large sets of short URLs with customizable items per page.
 
 ## How It Works
 
