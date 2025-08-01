@@ -12,5 +12,14 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       reportsDirectory: '../coverage',
     },
+    deps: {
+      optimizer: {
+        web: {
+          include: [
+            '@mui/icons-material',
+          ],
+        },
+      },
+    },
   },
 });

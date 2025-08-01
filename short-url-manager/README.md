@@ -1,6 +1,6 @@
-# Racket URL Manager
+# SnapURL Manager
 
-A Terminal User Interface (TUI) for managing Racket URL Shortener mappings.
+A Terminal User Interface (TUI) for managing SnapURL mappings.
 
 ## Features
 
@@ -47,17 +47,17 @@ The TUI is configured via a `.env` file in the `short-url-manager/` directory. C
 **.env file**
 ```
 # The full URL of your deployed Cloudflare Worker
-RACKET_WORKER_URL=https://your-shortener.workers.dev
+SNAPURL_WORKER_URL=https://your-shortener.workers.dev
 
 # The local path to the CSV file for exports
-RACKET_CSV_FILE=./url-mappings.csv
+SNAPURL_CSV_FILE=./url-mappings.csv
 ```
 
 You can also override these settings with environment variables at runtime:
 
 ```bash
 # Custom worker URL
-RACKET_WORKER_URL=https://another-worker.workers.dev npm start
+SNAPURL_WORKER_URL=https://another-worker.workers.dev npm start
 ```
 
 ### Menu Options
@@ -73,7 +73,7 @@ RACKET_WORKER_URL=https://another-worker.workers.dev npm start
 
 - Node.js 18.0.0 or higher
 - **Wrangler CLI** installed and authenticated
-- **Cloudflare account access** to the my-url-shortener project
+- **Cloudflare account access** to the snapurl project
 
 ## How It Works
 
@@ -110,7 +110,7 @@ The application will look for and create these files in your current directory:
    ```bash
    wrangler kv namespace list
    ```
-   You should see the `my_shortener_kv` namespace listed.
+   You should see the `SNAPURL_KV` namespace listed.
 
 ### For Team Members
 
@@ -169,7 +169,7 @@ To share this application with others:
 
 ### Important Notes
 
-- **Recipients must have Cloudflare account access** to the my-url-shortener project
+- **Recipients must have Cloudflare account access** to the snapurl project
 - **They need appropriate KV namespace permissions** to read/write URL mappings
 - **The application works entirely through Wrangler CLI** - no public API endpoints
 - **All operations are authenticated** through their Cloudflare account

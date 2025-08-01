@@ -5,8 +5,8 @@ import worker from '../src';
 describe('URL Shortener Worker', () => {
   beforeEach(async () => {
     // Clear all keys from the KV namespace
-    const { keys } = await env.racket_shortener.list();
-    const promises = keys.map((key) => env.racket_shortener.delete(key.name));
+    const { keys } = await env.SNAPURL_KV.list();
+    const promises = keys.map((key) => env.SNAPURL_KV.delete(key.name));
     await Promise.all(promises);
   });
 
@@ -32,7 +32,7 @@ describe('URL Shortener Worker', () => {
   });
 
   it('should redirect a valid short code to the long URL (plain string)', async () => {
-    await env.racket_shortener.put('test-code', 'https://example.com/long-url');
+    await env.SNAPURL_KV.put('test-code', 'https://example.com/long-url');
 
     const request = new Request('http://example.com/test-code');
     const ctx = createExecutionContext();
@@ -50,7 +50,7 @@ describe('URL Shortener Worker', () => {
       utm_medium: 'test_medium',
       utm_campaign: 'test_campaign',
     });
-    await env.racket_shortener.put('json-code', jsonValue);
+    await env.SNAPURL_KV.put('json-code', jsonValue);
 
     const request = new Request('http://example.com/json-code');
     const ctx = createExecutionContext();
@@ -76,11 +76,9 @@ describe('URL Shortener Worker', () => {
     // Mock the KV namespace to throw an error on get
     const errorEnv = {
       ...env,
-      racket_shortener: {
-        ...env.racket_shortener,
-        get: vi.fn(() => {
-          throw new Error('KV lookup failed');
-        }),
+      SNAPURL_KV: {
+        ...env.SNAPURL_KV,
+        get: vi.fn().mockRejectedValue(new Error('KV lookup failed')),
       },
     };
 
@@ -94,7 +92,7 @@ describe('URL Shortener Worker', () => {
   });
 
   it('should handle integration-style requests for valid short codes', async () => {
-    await env.racket_shortener.put('integration-test', 'https://integration.example.com');
+    await env.SNAPURL_KV.put('integration-test', 'https://integration.example.com');
 
     const request = new Request('http://example.com/integration-test');
     const ctx = createExecutionContext();
