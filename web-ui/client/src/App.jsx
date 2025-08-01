@@ -355,7 +355,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
   };
 
   return (
-    <div className="modal show d-block" tabIndex="-1">
+    <div className="modal show d-block" tabIndex="-1" role="dialog">
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">

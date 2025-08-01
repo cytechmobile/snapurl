@@ -32,9 +32,9 @@ class URLShortenerTUI {
       console.log(chalk.yellow('⏳ Loading URL mappings from Cloudflare KV...'));
       
       // Get list of keys from KV using wrangler
-      const keysOutput = execSync('wrangler kv key list --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote', { 
+      const keysOutput = execSync('wrangler kv key list --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote', {
         encoding: 'utf8',
-        cwd: process.cwd() 
+        cwd: process.cwd()
       });
       
       const keys = JSON.parse(keysOutput);
@@ -115,7 +115,9 @@ class URLShortenerTUI {
         break;
     }
 
-    await this.showMainMenu();
+    if (action !== 'exit') {
+      await this.showMainMenu();
+    }
   }
 
   async listMappings() {
@@ -123,17 +125,16 @@ class URLShortenerTUI {
     
     if (this.mappings.size === 0) {
       console.log(chalk.gray('No mappings found.\n'));
-      return;
+    } else {
+      const sortedMappings = Array.from(this.mappings.entries()).sort();
+      
+      for (const [shortCode, longUrl] of sortedMappings) {
+        const shortUrl = `${CONFIG.workerUrl}/${shortCode}`;
+        console.log(chalk.cyan(`${shortCode.padEnd(25)}`), '→', chalk.gray(longUrl));
+      }
+      
+      console.log(chalk.green(`\n✓ Total: ${this.mappings.size} mappings\n`));
     }
-
-    const sortedMappings = Array.from(this.mappings.entries()).sort();
-    
-    for (const [shortCode, longUrl] of sortedMappings) {
-      const shortUrl = `${CONFIG.workerUrl}/${shortCode}`;
-      console.log(chalk.cyan(`${shortCode.padEnd(25)}`), '→', chalk.gray(longUrl));
-    }
-    
-    console.log(chalk.green(`\n✓ Total: ${this.mappings.size} mappings\n`));
     
     await this.pressEnterToContinue();
   }
@@ -173,6 +174,8 @@ class URLShortenerTUI {
     const answers = await inquirer.prompt(questions);
     
     try {
+      // Validation happens implicitly through inquirer.prompt's validate functions
+      // If validation passes, proceed to create the short URL
       console.log(chalk.yellow('\n⏳ Creating short URL...'));
       
       let shortCode = answers.shortCode.trim();
@@ -422,6 +425,4 @@ class URLShortenerTUI {
   }
 }
 
-// Start the TUI
-const tui = new URLShortenerTUI();
-tui.start().catch(console.error);
+export default URLShortenerTUI;

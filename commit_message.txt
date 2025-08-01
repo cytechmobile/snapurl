@@ -1,0 +1,7 @@
+refactor(web-ui): improve performance with optimistic UI updates
+
+Implements optimistic UI updates to make the application feel instantaneous when creating, updating, or deleting links.
+
+- Removes the slow, blocking `fetchFromKVAndCache` call from the server's CUD operations, making the API responses much faster.
+- Modifies the frontend to update the local state immediately, providing a responsive user experience.
+- Adds error handling to revert the UI state if a background API call fails, ensuring data consistency.
