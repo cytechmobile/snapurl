@@ -111,19 +111,42 @@ apiRouter.post('/mappings', async (req, res) => {
   const result = runWrangler(command);
 
   if (result.success) {
-    await fetchFromKVAndCache();
     res.status(201).json({ success: true, data: { shortCode, longUrl } });
   } else {
     res.status(500).json({ success: false, error: `Failed to create short URL: ${result.error}` });
   }
 });
+apiRouter.put('/mappings/:shortCode', async (req, res) => {
+  const { shortCode } = req.params;
+  const { longUrl, utm_source, utm_medium, utm_campaign } = req.body;
+  if (!shortCode || !longUrl) {
+    return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
+  }
+
+  // Store the data as a JSON object
+  const value = JSON.stringify({
+    longUrl,
+    utm_source: utm_source || '',
+    utm_medium: utm_medium || '',
+    utm_campaign: utm_campaign || '',
+  });
+
+  const command = `wrangler kv key put "${shortCode}" '${value}' --namespace-id ${WRANGLER_NAMESPACE_ID}`;
+  const result = runWrangler(command);
+
+  if (result.success) {
+    res.json({ success: true, data: { shortCode, longUrl } });
+  } else {
+    res.status(500).json({ success: false, error: `Failed to update short URL: ${result.error}` });
+  }
+});
+
 apiRouter.delete('/mappings/:shortCode', async (req, res) => {
   const { shortCode } = req.params;
   if (!shortCode) return res.status(400).json({ success: false, error: 'Short code is required.' });
   const command = `wrangler kv key delete "${shortCode}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
   const result = runWrangler(command);
   if (result.success) {
-    await fetchFromKVAndCache();
     res.json({ success: true });
   } else {
     res.status(500).json({ success: false, error: `Failed to delete short URL: ${result.error}` });
