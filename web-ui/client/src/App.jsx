@@ -18,7 +18,7 @@ function App() {
     () => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Number of items per page
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items per page
 
   useEffect(() => {
     localStorage.setItem('shortUrlHost', shortUrlHost);
@@ -180,6 +180,11 @@ function App() {
           onShowCreateModal={handleShowCreateModal}
           searchTerm={searchTerm}
           onSearchTermChange={e => setSearchTerm(e.target.value)}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(e) => {
+            setItemsPerPage(Number(e.target.value));
+            setCurrentPage(1); // Reset to first page on items per page change
+          }}
         />
         {error && <div className="alert alert-danger mt-3"><strong>Error:</strong> {error}</div>}
         {isLoading && <Spinner />}
@@ -244,33 +249,43 @@ const Header = () => (
   </header>
 );
 
-const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange }) => (
+const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange, itemsPerPage, onItemsPerPageChange }) => (
   <div className="d-flex flex-nowrap justify-content-between align-items-center mb-3 p-3 bg-light border rounded gap-2">
-    <div className="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-      <div className="btn-group me-2" role="group" aria-label="Actions group">
-        <button className="btn btn-primary" onClick={onShowCreateModal} title="Create New Short URL">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-lg" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
-            <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
-          </svg> Create New
-        </button>
-        <button className="btn btn-secondary" onClick={onRefresh} title="Refresh Mappings from Server">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-clockwise" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
-            <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-          </svg> Refresh
-        </button>
+      <div className="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+        <div className="btn-group me-2" role="group" aria-label="Actions group">
+          <button className="btn btn-primary" onClick={onShowCreateModal} title="Create New Short URL">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-lg" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+              <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+            </svg> Create New
+          </button>
+          <button className="btn btn-secondary" onClick={onRefresh} title="Refresh Mappings from Server">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-clockwise" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+              <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg> Refresh
+          </button>
+        </div>
+        <div className="input-group input-group-sm">
+          <label htmlFor="itemsPerPage" className="input-group-text">Show:</label>
+          <select id="itemsPerPage" className="form-select" value={itemsPerPage} onChange={onItemsPerPageChange}>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <span className="input-group-text">entries</span>
+        </div>
+      </div>
+      <div className="ms-md-auto">
+        <input
+          type="search"
+          className="form-control form-control-sm"
+          placeholder="Search mappings..."
+          value={searchTerm}
+          onChange={onSearchTermChange}
+        />
       </div>
     </div>
-    <div className="ms-md-auto">
-      <input
-        type="search"
-        className="form-control form-control-sm"
-        placeholder="Search mappings..."
-        value={searchTerm}
-        onChange={onSearchTermChange}
-      />
-    </div>
-  </div>
 );
 
 const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode }) => {
