@@ -1,6 +1,6 @@
 
 
-# **Cloudflare URL Shortener**
+# **SnapURL**
 
 A high-performance URL shortener implemented using Cloudflare Workers and Cloudflare KV. This project allows you to create custom short links that **redirect** users to the original long **URL**, all while providing options for detailed analytics.
 
@@ -46,10 +46,10 @@ This section covers the one-time setup for the Cloudflare Worker that powers the
     Open `wrangler.jsonc` and fill in your `account_id`. Then, create a KV namespace for your links by running:
     ```bash
     # This creates the production namespace
-    wrangler kv:namespace create "racket_shortener"
+    wrangler kv:namespace create "SNAPURL_KV"
 
     # This creates a preview namespace for testing
-    wrangler kv:namespace create "racket_shortener" --preview
+    wrangler kv:namespace create "SNAPURL_KV" --preview
     ```
     Wrangler will output the `id` and `preview_id` for your new namespaces. **Copy these IDs** and paste them into the `kv_namespaces` section of your `wrangler.jsonc` file.
 

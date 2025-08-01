@@ -20,7 +20,7 @@ class URLShortenerTUI {
 
   async start() {
     console.clear();
-    console.log(chalk.blue.bold('🔗 URL Shortener Manager v1.0.0\n'));
+    console.log(chalk.blue.bold('🔗 SnapURL v1.0.0'));
     console.log(chalk.gray(`Worker URL: ${CONFIG.workerUrl}`));
     console.log(chalk.gray(`CSV File: ${path.resolve(CONFIG.csvFile)}\n`));
     console.log(chalk.yellow('Mappings are not loaded automatically. Use "Refresh mappings from KV" to load them.\n'));
@@ -32,7 +32,7 @@ class URLShortenerTUI {
       console.log(chalk.yellow('⏳ Loading URL mappings from Cloudflare KV...'));
       
       // Get list of keys from KV using wrangler
-      const keysOutput = execSync('wrangler kv key list --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote', {
+      const keysOutput = execSync('wrangler kv key list --binding=SNAPURL_KV --remote', {
         encoding: 'utf8',
         cwd: process.cwd()
       });
@@ -43,7 +43,7 @@ class URLShortenerTUI {
       // Fetch each key's value
       for (const keyObj of keys) {
         try {
-          const valueOutput = execSync(`wrangler kv key get "${keyObj.name}" --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote`, {
+          const valueOutput = execSync(`wrangler kv key get "${keyObj.name}" --binding=SNAPURL_KV --remote`, {
             encoding: 'utf8',
             cwd: process.cwd()
           });
@@ -190,7 +190,7 @@ class URLShortenerTUI {
           shortCode = nanoid(6);
           // Check if already exists
           try {
-            const existingValue = execSync(`wrangler kv key get "${shortCode}" --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote`, {
+            const existingValue = execSync(`wrangler kv key get "${shortCode}" --binding=SNAPURL_KV --remote`, {
               encoding: 'utf8',
               stdio: 'pipe'
             });
@@ -205,7 +205,7 @@ class URLShortenerTUI {
       } else {
         // Check if custom short code already exists
         try {
-          const existingValue = execSync(`wrangler kv key get "${shortCode}" --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote`, {
+          const existingValue = execSync(`wrangler kv key get "${shortCode}" --binding=SNAPURL_KV --remote`, {
             encoding: 'utf8',
             stdio: 'pipe'
           });
@@ -220,7 +220,7 @@ class URLShortenerTUI {
       }
       
       // Create the short URL using wrangler
-      execSync(`wrangler kv key put "${shortCode}" "${longUrl}" --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote`, {
+      execSync(`wrangler kv key put "${shortCode}" "${longUrl}" --binding=SNAPURL_KV --remote`, {
         encoding: 'utf8',
         stdio: 'pipe'
       });
@@ -292,7 +292,7 @@ class URLShortenerTUI {
         console.log(chalk.yellow(`\n⏳ Deleting short URL '${shortCodeToDelete}'...`));
 
         // Delete from Cloudflare KV
-        execSync(`wrangler kv key delete "${shortCodeToDelete}" --namespace-id=bb0b757c25914a818f3d0c146371d780 --remote`, {
+        execSync(`wrangler kv key delete "${shortCodeToDelete}" --binding=SNAPURL_KV --remote`, {
           encoding: 'utf8',
           stdio: 'pipe'
         });

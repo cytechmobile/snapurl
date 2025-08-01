@@ -14,7 +14,7 @@ export default {
         return Response.redirect(rootUrl, 302);
     }
     try {
-      const longUrl = await env.racket_shortener.get(shortCode);
+      const longUrl = await env.SNAPURL_KV.get(shortCode);
 
       if (longUrl) {
         // New: Parse the value which may be a JSON object

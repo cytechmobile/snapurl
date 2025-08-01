@@ -265,7 +265,7 @@ const Header = () => (
   <AppBar position="static" sx={{ mb: 3, boxShadow: 3 }}>
     <MuiToolbar>
       <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-        🔗 URL Shortener Manager
+        🔗 SnapURL
       </Typography>
     </MuiToolbar>
   </AppBar>

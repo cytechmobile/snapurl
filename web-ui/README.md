@@ -1,6 +1,6 @@
-# Web UI for URL Shortener Manager
+# Web UI for SnapURL
 
-This directory contains a local-only web application that provides a graphical user interface (UI) for managing the Cloudflare URL Shortener. It is designed to be run on your local machine and acts as a more user-friendly alternative to the command-line TUI.
+This directory contains a local-only web application that provides a graphical user interface (UI) for managing SnapURL. It is designed to be run on your local machine and acts as a more user-friendly alternative to the command-line TUI.
 
 ## Features
 
@@ -87,7 +87,7 @@ The server will now handle everything. You can access the application by opening
 
 -   Node.js 18.0.0 or higher
 -   **Wrangler CLI** installed and authenticated
--   **Cloudflare account access** to the `my-link-shortener` project
+-   **Cloudflare account access** to the `snapurl` project
 
 ## Security Considerations
 
@@ -109,4 +109,4 @@ This project is licensed under the GNU General Public License v3.0. See the [LIC
 
 ---
 
-Built for Racket.gr URL Shortener 🔗
+Built for SnapURL 🔗

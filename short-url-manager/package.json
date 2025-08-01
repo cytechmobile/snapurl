@@ -1,7 +1,7 @@
 {
-  "name": "short-url-manager",
+  "name": "snapurl-manager",
   "version": "1.0.0",
-  "description": "Terminal UI for managing Racket URL Shortener mappings",
+  "description": "Terminal UI for managing SnapURL mappings",
   "main": "index.js",
   "bin": {
     "short-url-manager": "./index.js"

@@ -1,7 +1,7 @@
 {
-  "name": "web-ui",
+  "name": "snapurl-web-ui",
   "version": "1.0.0",
-  "description": "",
+  "description": "Web UI for SnapURL",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
