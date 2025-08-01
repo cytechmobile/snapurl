@@ -24,6 +24,10 @@ function App() {
   const [shortUrlHost, setShortUrlHost] = useState(
     () => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items per page
+  const [sortColumn, setSortColumn] = useState('shortCode');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     localStorage.setItem('shortUrlHost', shortUrlHost);
@@ -504,5 +508,36 @@ const Spinner = () => (
     <CircularProgress />
   </Box>
 );
+
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
+  return (
+    <nav aria-label="Page navigation">
+      <ul className="pagination justify-content-center mt-3">
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => onPageChange(currentPage - 1)} aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </button>
+        </li>
+        {pageNumbers.map(number => (
+          <li key={number} className={`page-item ${currentPage === number ? 'active' : ''}`}>
+            <button className="page-link" onClick={() => onPageChange(number)}>
+              {number}
+            </button>
+          </li>
+        ))}
+        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => onPageChange(currentPage + 1)} aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+};
 
 export default App;
