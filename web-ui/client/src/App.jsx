@@ -203,7 +203,7 @@ function App() {
           onRefresh={() => fetchMappings(true)} 
           onShowCreateModal={handleShowCreateModal}
           searchTerm={searchTerm}
-          onSearchTermChange={e => setSearchTerm(e.target.value)}
+          onSearchTermChange={e => { setSearchTerm(e.target.value); setPage(0); }}
         />
         {error && <Alert severity="error" sx={{ mt: 3, p: 2, boxShadow: 3 }}><strong>Error:</strong> {error}</Alert>}
         {isLoading && <Spinner />}
