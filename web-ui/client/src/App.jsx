@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { nanoid } from 'nanoid';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Container, Box, Typography, Paper, TextField, Button, IconButton, Select, MenuItem, FormControl, InputLabel, CircularProgress, Alert, TablePagination } from '@mui/material';
+import { Container, Box, Typography, Paper, TextField, Button, IconButton, CircularProgress, Alert, TablePagination } from '@mui/material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { AppBar, Toolbar as MuiToolbar } from '@mui/material'; // Renamed Toolbar to MuiToolbar to avoid conflict
 import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Grid } from '@mui/material';
 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
@@ -17,17 +18,13 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortColumn, setSortColumn] = useState(null);
+  const [sortColumn, setSortColumn] = useState('shortCode');
   const [sortDirection, setSortDirection] = useState('asc');
   const [editingMapping, setEditingMapping] = useState(null); // Use this for both create and edit
   const [qrCodeValue, setQrCodeValue] = useState(null);
   const [shortUrlHost, setShortUrlHost] = useState(
     () => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items per page
-  const [sortColumn, setSortColumn] = useState('shortCode');
-  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     localStorage.setItem('shortUrlHost', shortUrlHost);
@@ -357,8 +354,6 @@ const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, so
   );
 };
 
-import { Dialog, DialogTitle, DialogContent, DialogActions, Grid } from '@mui/material';
-
 const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
   const [formData, setFormData] = useState({
     longUrl: '',
@@ -443,7 +438,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
             />
             <Typography variant="h6" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>UTM Parameters (Optional)</Typography>
             <Grid container spacing={2}>
-              <Grid>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   id="utm_source"
@@ -454,7 +449,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
                   placeholder="e.g., google"
                 />
               </Grid>
-              <Grid>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   id="utm_medium"
@@ -465,7 +460,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
                   placeholder="e.g., cpc"
                 />
               </Grid>
-              <Grid>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   id="utm_campaign"
@@ -508,36 +503,5 @@ const Spinner = () => (
     <CircularProgress />
   </Box>
 );
-
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
-
-  return (
-    <nav aria-label="Page navigation">
-      <ul className="pagination justify-content-center mt-3">
-        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-          <button className="page-link" onClick={() => onPageChange(currentPage - 1)} aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
-          </button>
-        </li>
-        {pageNumbers.map(number => (
-          <li key={number} className={`page-item ${currentPage === number ? 'active' : ''}`}>
-            <button className="page-link" onClick={() => onPageChange(number)}>
-              {number}
-            </button>
-          </li>
-        ))}
-        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-          <button className="page-link" onClick={() => onPageChange(currentPage + 1)} aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-          </button>
-        </li>
-      </ul>
-    </nav>
-  );
-};
 
 export default App;
