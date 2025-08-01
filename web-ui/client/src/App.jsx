@@ -220,7 +220,7 @@ const Header = () => (
 );
 
 const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange }) => (
-  <div className="d-flex flex-wrap justify-content-between align-items-center mb-3 p-3 bg-light border rounded">
+  <div className="d-flex flex-nowrap justify-content-between align-items-center mb-3 p-3 bg-light border rounded gap-2">
     <div className="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
       <div className="btn-group me-2" role="group" aria-label="Actions group">
         <button className="btn btn-primary" onClick={onShowCreateModal} title="Create New Short URL">
@@ -269,7 +269,7 @@ const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode }) => {
               <td className="text-truncate" style={{ maxWidth: '30vw' }}>
                 <a href={mapping.longUrl} target="_blank" rel="noopener noreferrer">{mapping.longUrl}</a>
               </td>
-              <td className="text-end">
+              <td className="text-end d-flex justify-content-end flex-nowrap gap-2">
                 <button 
                   className="btn btn-outline-secondary btn-sm me-2" 
                   onClick={() => onShowQrCode(mapping.shortCode)}
