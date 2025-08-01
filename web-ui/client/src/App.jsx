@@ -17,6 +17,8 @@ function App() {
   const [shortUrlHost, setShortUrlHost] = useState(
     () => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items per page
 
   useEffect(() => {
     localStorage.setItem('shortUrlHost', shortUrlHost);
@@ -142,12 +144,26 @@ function App() {
     }
   };
 
-  const filteredMappings = useMemo(() => {
+  const searchedMappings = useMemo(() => {
     return mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [mappings, searchTerm]);
+
+  const filteredMappings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return searchedMappings.slice(startIndex, endIndex);
+  }, [searchedMappings, currentPage, itemsPerPage]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(searchedMappings.length / itemsPerPage);
+  }, [searchedMappings, itemsPerPage]);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="container">
@@ -161,17 +177,34 @@ function App() {
           onRefresh={() => fetchMappings(true)} 
           onShowCreateModal={handleShowCreateModal}
           searchTerm={searchTerm}
-          onSearchTermChange={e => setSearchTerm(e.target.value)}
+          onSearchTermChange={e => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1); // Reset to first page on search term change
+          }}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(e) => {
+            setItemsPerPage(Number(e.target.value));
+            setCurrentPage(1); // Reset to first page on items per page change
+          }}
         />
         {error && <div className="alert alert-danger mt-3"><strong>Error:</strong> {error}</div>}
         {isLoading && <Spinner />}
         {!isLoading && !error && (
-          <MappingTable 
-            mappings={filteredMappings} 
-            onDelete={handleDelete}
-            onEdit={handleShowEditModal}
-            onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)} 
-          />
+          <>
+            <MappingTable 
+              mappings={filteredMappings} 
+              onDelete={handleDelete}
+              onEdit={handleShowEditModal}
+              onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)} 
+            />
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </>
         )}
       </main>
       {editingMapping && (
@@ -219,33 +252,43 @@ const Header = () => (
   </header>
 );
 
-const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange }) => (
+const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange, itemsPerPage, onItemsPerPageChange }) => (
   <div className="d-flex flex-nowrap justify-content-between align-items-center mb-3 p-3 bg-light border rounded gap-2">
-    <div className="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-      <div className="btn-group me-2" role="group" aria-label="Actions group">
-        <button className="btn btn-primary" onClick={onShowCreateModal} title="Create New Short URL">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-lg" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
-            <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
-          </svg> Create New
-        </button>
-        <button className="btn btn-secondary" onClick={onRefresh} title="Refresh Mappings from Server">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-clockwise" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
-            <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-          </svg> Refresh
-        </button>
+      <div className="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+        <div className="btn-group me-2" role="group" aria-label="Actions group">
+          <button className="btn btn-primary" onClick={onShowCreateModal} title="Create New Short URL">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-lg" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+              <path fillRule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+            </svg> Create New
+          </button>
+          <button className="btn btn-secondary" onClick={onRefresh} title="Refresh Mappings from Server">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-clockwise" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
+              <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg> Refresh
+          </button>
+        </div>
+        <div className="input-group input-group-sm">
+          <label htmlFor="itemsPerPage" className="input-group-text">Show:</label>
+          <select id="itemsPerPage" className="form-select" value={itemsPerPage} onChange={onItemsPerPageChange}>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+          <span className="input-group-text">entries</span>
+        </div>
+      </div>
+      <div className="ms-md-auto">
+        <input
+          type="search"
+          className="form-control form-control-sm"
+          placeholder="Search mappings..."
+          value={searchTerm}
+          onChange={onSearchTermChange}
+        />
       </div>
     </div>
-    <div className="ms-md-auto">
-      <input
-        type="search"
-        className="form-control form-control-sm"
-        placeholder="Search mappings..."
-        value={searchTerm}
-        onChange={onSearchTermChange}
-      />
-    </div>
-  </div>
 );
 
 const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode }) => {
@@ -453,5 +496,36 @@ const Spinner = () => (
     </div>
   </div>
 );
+
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
+
+  return (
+    <nav aria-label="Page navigation">
+      <ul className="pagination justify-content-center mt-3">
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => onPageChange(currentPage - 1)} aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </button>
+        </li>
+        {pageNumbers.map(number => (
+          <li key={number} className={`page-item ${currentPage === number ? 'active' : ''}`}>
+            <button className="page-link" onClick={() => onPageChange(number)}>
+              {number}
+            </button>
+          </li>
+        ))}
+        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+          <button className="page-link" onClick={() => onPageChange(currentPage + 1)} aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+};
 
 export default App;
