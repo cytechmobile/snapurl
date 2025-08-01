@@ -7,11 +7,31 @@ const fs = require('fs');
 const app = express();
 const port = 3001;
 
-// --- Config ---
 const projectRoot = path.resolve(__dirname, '..');
 const csvPath = path.join(projectRoot, 'url-mappings.csv');
-const WRANGLER_NAMESPACE_ID = 'bb0b757c25914a818f3d0c146371d780';
 const clientBuildPath = path.join(__dirname, 'client', 'dist');
+
+// --- Dynamic Configuration ---
+let WRANGLER_NAMESPACE_ID;
+try {
+  const wranglerConfigPath = path.join(projectRoot, 'wrangler.jsonc');
+  const wranglerConfig = fs.readFileSync(wranglerConfigPath, 'utf8');
+  // A simple regex to strip comments, as JSON.parse can't handle them.
+  const jsonc = wranglerConfig.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? "" : m);
+  const config = JSON.parse(jsonc);
+  
+  // Dynamically use the *first* KV namespace defined in the config.
+  const kvBinding = config.kv_namespaces?.[0];
+  
+  if (!kvBinding || !kvBinding.id) {
+    throw new Error("Could not find a valid KV namespace binding in wrangler.jsonc. Please ensure at least one is defined with an 'id'.");
+  }
+  WRANGLER_NAMESPACE_ID = kvBinding.id;
+  console.log(`Successfully loaded KV Namespace ID: ${WRANGLER_NAMESPACE_ID} (from binding '${kvBinding.binding}')`);
+} catch (error) {
+  console.error("FATAL: Could not load configuration from wrangler.jsonc.", error);
+  process.exit(1); // Exit if configuration is missing.
+}
 
 // --- Middleware ---
 app.use(cors());
@@ -39,7 +59,12 @@ const fetchFromKVAndCache = async () => {
     const getCommand = `wrangler kv key get "${key.name}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
     const getResult = runWrangler(getCommand);
     if (getResult.success) {
-      mappings.push({ shortCode: key.name, longUrl: getResult.data.trim() });
+      try {
+        const value = JSON.parse(getResult.data);
+        mappings.push({ shortCode: key.name, longUrl: value.longUrl });
+      } catch (e) {
+        mappings.push({ shortCode: key.name, longUrl: getResult.data.trim() });
+      }
     }
   }
   const csvContent = ['Short URL,Long URL', ...mappings.map(m => `${m.shortCode},${m.longUrl}`)];
@@ -68,10 +93,22 @@ apiRouter.get('/mappings', async (req, res) => {
   }
 });
 apiRouter.post('/mappings', async (req, res) => {
-  const { shortCode, longUrl } = req.body;
-  if (!shortCode || !longUrl) return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
-  const command = `wrangler kv key put "${shortCode}" "${longUrl}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
+  const { shortCode, longUrl, utm_source, utm_medium, utm_campaign } = req.body;
+  if (!shortCode || !longUrl) {
+    return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
+  }
+
+  // Store the data as a JSON object
+  const value = JSON.stringify({
+    longUrl,
+    utm_source: utm_source || '',
+    utm_medium: utm_medium || '',
+    utm_campaign: utm_campaign || '',
+  });
+
+  const command = `wrangler kv key put "${shortCode}" '${value}' --namespace-id ${WRANGLER_NAMESPACE_ID}`;
   const result = runWrangler(command);
+
   if (result.success) {
     await fetchFromKVAndCache();
     res.status(201).json({ success: true, data: { shortCode, longUrl } });

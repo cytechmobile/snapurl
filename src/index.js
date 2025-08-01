@@ -16,12 +16,25 @@ export default {
       const longUrl = await env.racket_shortener.get(shortCode);
 
       if (longUrl) {
-// --- Google Analytics logging code starts here ---
+        // New: Parse the value which may be a JSON object
+        let destinationUrl = longUrl;
+        let utmParams = {};
+        try {
+          const value = JSON.parse(longUrl);
+          destinationUrl = value.longUrl;
+          utmParams = {
+            utm_source: value.utm_source,
+            utm_medium: value.utm_medium,
+            utm_campaign: value.utm_campaign,
+          };
+        } catch (e) {
+          // It's a plain string, do nothing.
+        }
+
         event.waitUntil(
-          logGoogleAnalytics(request, env, shortCode, longUrl)
+          logGoogleAnalytics(request, env, shortCode, destinationUrl, utmParams)
         );
-// --- Google Analytics logging code ends here ---
-        return Response.redirect(longUrl, 302);
+        return Response.redirect(destinationUrl, 302);
       } else {
         return Response.redirect("https://racket.gr", 302);
         //return new Response("Short URL not found", { status: 404 });
@@ -33,7 +46,7 @@ export default {
   },
 };
 // New function to handle the Google Analytics logging
-async function logGoogleAnalytics(request, env, shortCode, longUrl) {
+async function logGoogleAnalytics(request, env, shortCode, longUrl, utmParams = {}) {
   const measurementId = env.GOOGLE_ANALYTICS_MEASUREMENT_ID;
   const apiSecret = env.GOOGLE_ANALYTICS_API_SECRET;
 
@@ -47,6 +60,7 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
   const countryCode = request.cf?.country || 'unknown';
   const regionCodeRaw = request.cf?.regionCode || ''; // Get the raw region code, e.g., 'I'
   const regionId = (countryCode !== 'unknown' && regionCodeRaw !== '') ? `${countryCode}-${regionCodeRaw}` : 'unknown';
+  const city = request.cf?.city || 'unknown';
   
   const uniqueIdentifier = `${userIp}-${userAgent}`;
   const encoder = new TextEncoder();
@@ -61,12 +75,21 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl) {
       {
         name: "short_link_access",
         params: {
-          country: countryCode,
-          region: regionId,
-          city: request.cf?.city || 'unknown',
           page_location: request.url,
           page_referrer: request.headers.get('Referer') || 'none',
           engagement_time_msec: 1,
+          
+          // Standard GA4 campaign parameters
+          source: utmParams.utm_source,
+          medium: utmParams.utm_medium,
+          campaign: utmParams.utm_campaign,
+
+          // Geo-location data (for custom reports)
+          country: countryCode,
+          region: regionId,
+          city: city,
+
+          // Custom dimensions
           request_hostname: new URL(request.url).hostname,
           link_short_code: shortCode,
           link_longUrl: longUrl,
