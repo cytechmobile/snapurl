@@ -70,55 +70,74 @@ function App() {
   };
 
   const handleCreate = async (formData) => {
-    setIsLoading(true);
     const shortCode = formData.customShortCode || nanoid(6);
-    
+    const newMapping = { ...formData, shortCode };
+
+    // Optimistic UI update
+    setMappings(prev => [...prev, newMapping]);
+    handleModalClose();
+
     try {
       const response = await fetch(`${API_BASE_URL}/mappings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, shortCode }),
+        body: JSON.stringify(newMapping),
       });
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Failed to create mapping.');
-      handleModalClose();
-      await fetchMappings(true); // Force refresh after create
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to create mapping.');
+      }
     } catch (err) {
       setError(err.message);
-      setIsLoading(false);
+      // Revert the optimistic update on error
+      setMappings(prev => prev.filter(m => m.shortCode !== shortCode));
     }
   };
 
   const handleUpdate = async (formData) => {
-    setIsLoading(true);
     const { shortCode } = formData;
+    const originalMappings = mappings;
+
+    // Optimistic UI update
+    setMappings(prev => prev.map(m => m.shortCode === shortCode ? formData : m));
+    handleModalClose();
+
     try {
       const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Failed to update mapping.');
-      handleModalClose();
-      await fetchMappings(true); // Force refresh after update
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to update mapping.');
+      }
     } catch (err) {
       setError(err.message);
-      setIsLoading(false);
+      // Revert the optimistic update on error
+      setMappings(originalMappings);
     }
   };
 
   const handleDelete = async (shortCode) => {
     if (window.confirm(`Are you sure you want to delete the short URL "${shortCode}"?`)) {
-      setIsLoading(true);
+      const originalMappings = mappings;
+      // Optimistic UI update
+      setMappings(prev => prev.filter(m => m.shortCode !== shortCode));
+
       try {
         const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, { method: 'DELETE' });
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error || 'Failed to delete mapping.');
-        await fetchMappings(true); // Force refresh after delete
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.error || 'Failed to delete mapping.');
+        }
       } catch (err) {
         setError(err.message);
-        setIsLoading(false);
+        // Revert the optimistic update on error
+        setMappings(originalMappings);
       }
     }
   };

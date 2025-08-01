@@ -111,7 +111,6 @@ apiRouter.post('/mappings', async (req, res) => {
   const result = runWrangler(command);
 
   if (result.success) {
-    await fetchFromKVAndCache();
     res.status(201).json({ success: true, data: { shortCode, longUrl } });
   } else {
     res.status(500).json({ success: false, error: `Failed to create short URL: ${result.error}` });
@@ -136,7 +135,6 @@ apiRouter.put('/mappings/:shortCode', async (req, res) => {
   const result = runWrangler(command);
 
   if (result.success) {
-    await fetchFromKVAndCache();
     res.json({ success: true, data: { shortCode, longUrl } });
   } else {
     res.status(500).json({ success: false, error: `Failed to update short URL: ${result.error}` });
@@ -149,7 +147,6 @@ apiRouter.delete('/mappings/:shortCode', async (req, res) => {
   const command = `wrangler kv key delete "${shortCode}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
   const result = runWrangler(command);
   if (result.success) {
-    await fetchFromKVAndCache();
     res.json({ success: true });
   } else {
     res.status(500).json({ success: false, error: `Failed to delete short URL: ${result.error}` });
