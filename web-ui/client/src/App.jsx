@@ -19,6 +19,8 @@ function App() {
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10); // Number of items per page
+  const [sortColumn, setSortColumn] = useState('shortCode');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     localStorage.setItem('shortUrlHost', shortUrlHost);
@@ -145,11 +147,22 @@ function App() {
   };
 
   const searchedMappings = useMemo(() => {
-    return mappings.filter(m =>
+    const filtered = mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-  }, [mappings, searchTerm]);
+
+    const sorted = [...filtered].sort((a, b) => {
+      const aValue = a[sortColumn] || '';
+      const bValue = b[sortColumn] || '';
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [mappings, searchTerm, sortColumn, sortDirection]);
 
   const filteredMappings = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -196,6 +209,13 @@ function App() {
               onDelete={handleDelete}
               onEdit={handleShowEditModal}
               onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)} 
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={(column) => {
+                const newDirection = sortColumn === column && sortDirection === 'asc' ? 'desc' : 'asc';
+                setSortColumn(column);
+                setSortDirection(newDirection);
+              }}
             />
             {totalPages > 1 && (
               <Pagination
@@ -291,7 +311,7 @@ const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange,
     </div>
 );
 
-const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode }) => {
+const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, sortDirection, onSort }) => {
   if (mappings.length === 0) {
     return <div className="alert alert-info">No URL mappings found.</div>;
   }
@@ -300,8 +320,16 @@ const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode }) => {
       <table className="table table-striped table-hover mb-0">
         <thead className="table-dark">
           <tr>
-            <th>Short Code</th>
-            <th>Long URL</th>
+            <th onClick={() => onSort('shortCode')} style={{ cursor: 'pointer' }}>
+              Short Code {sortColumn === 'shortCode' && (
+                <i className={`bi ${sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down'}`}></i>
+              )}
+            </th>
+            <th onClick={() => onSort('longUrl')} style={{ cursor: 'pointer' }}>
+              Long URL {sortColumn === 'longUrl' && (
+                <i className={`bi ${sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down'}`}></i>
+              )}
+            </th>
             <th className="text-end">Actions</th>
           </tr>
         </thead>
