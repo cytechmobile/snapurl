@@ -298,17 +298,17 @@ const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, so
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell onClick={() => onSort('shortCode')} sx={{ cursor: 'pointer' }}>
+            <TableCell onClick={() => onSort('shortCode')} sx={{ cursor: 'pointer', width: '15%' }}>
               Short Code {sortColumn === 'shortCode' && (
                 sortDirection === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />
               )}
             </TableCell>
-            <TableCell onClick={() => onSort('longUrl')} sx={{ cursor: 'pointer' }}>
+            <TableCell onClick={() => onSort('longUrl')} sx={{ cursor: 'pointer', width: '60%' }}>
               Long URL {sortColumn === 'longUrl' && (
                 sortDirection === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />
               )}
             </TableCell>
-            <TableCell align="right">Actions</TableCell>
+            <TableCell align="right" sx={{ width: '25%' }}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
