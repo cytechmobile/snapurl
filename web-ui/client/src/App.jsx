@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { nanoid } from 'nanoid';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Container, Box, Typography, Paper, TextField, Button, IconButton, Select, MenuItem, FormControl, InputLabel, CircularProgress, Alert } from '@mui/material';
+import { Container, Box, Typography, Paper, TextField, Button, IconButton, Select, MenuItem, FormControl, InputLabel, CircularProgress, Alert, TablePagination } from '@mui/material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { AppBar, Toolbar as MuiToolbar } from '@mui/material'; // Renamed Toolbar to MuiToolbar to avoid conflict
 import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward } from '@mui/icons-material';
@@ -15,6 +15,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [editingMapping, setEditingMapping] = useState(null); // Use this for both create and edit
   const [qrCodeValue, setQrCodeValue] = useState(null);
   const [shortUrlHost, setShortUrlHost] = useState(
@@ -146,11 +148,22 @@ function App() {
   };
 
   const filteredMappings = useMemo(() => {
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
     return mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [mappings, searchTerm]);
+    ).slice(startIndex, endIndex);
+  }, [mappings, searchTerm, page, rowsPerPage]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -174,6 +187,11 @@ function App() {
             onDelete={handleDelete}
             onEdit={handleShowEditModal}
             onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)} 
+            page={page}
+            rowsPerPage={rowsPerPage}
+            totalMappings={mappings.length}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
           />
         )}
       </Box>
@@ -245,7 +263,7 @@ const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange 
   </Box>
 );
 
-const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, sortDirection, onSort }) => {
+const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, sortDirection, onSort, page, rowsPerPage, totalMappings, onPageChange, onRowsPerPageChange }) => {
   if (mappings.length === 0) {
     return <Typography variant="body1" sx={{ mt: 3, textAlign: 'center' }}>No URL mappings found.</Typography>;
   }
@@ -293,6 +311,15 @@ const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, so
           ))}
         </TableBody>
       </Table>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={totalMappings}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
+      />
     </TableContainer>
   );
 };
