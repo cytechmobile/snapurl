@@ -1,1 +1,18 @@
-/* No global styles needed here */
+/* Basic body styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f0f2f5; /* Light gray background */
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom styles for App.css - these will be moved or refactored into App.jsx's sx props */
+/* .container, .header, .settings-bar, .toolbar, .table-container, table, th, td, .action-buttons button, .modal-backdrop, .modal-content, .modal-header, .modal-body, .modal-footer, .form-group, .form-group label, .form-group input, .error-message, .qr-code-container, .qr-code-container canvas, .qr-code-container p, .spinner, .spinner-border, .alert-danger, .text-muted, .row, .col-md-4, .hr, .d-flex.justify-content-end, .me-2, .spinner-border-sm, .visually-hidden, .table-responsive, .table, .table th, .table td, .table thead th, .table tbody + tbody, .table-sm, .table-bordered, .table-borderless, .table-striped, .table-hover, .table-primary, .table-secondary, .table-success, .table-info, .table-warning, .table-danger, .table-light, .table-dark, .table-active, .table .thead-dark th, .table .thead-light th, .table-dark.table-bordered, .table-dark.table-striped, .table-dark.table-hover, .table-responsive-sm, .table-responsive-md, .table-responsive-lg, .table-responsive-xl */
