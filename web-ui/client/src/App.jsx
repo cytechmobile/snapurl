@@ -17,6 +17,8 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
   const [editingMapping, setEditingMapping] = useState(null); // Use this for both create and edit
   const [qrCodeValue, setQrCodeValue] = useState(null);
   const [shortUrlHost, setShortUrlHost] = useState(
@@ -148,13 +150,25 @@ function App() {
   };
 
   const filteredMappings = useMemo(() => {
-    const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    return mappings.filter(m =>
+    const filtered = mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
-    ).slice(startIndex, endIndex);
-  }, [mappings, searchTerm, page, rowsPerPage]);
+    );
+
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortColumn] || '';
+        const bValue = b[sortColumn] || '';
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  }, [mappings, searchTerm, page, rowsPerPage, sortColumn, sortDirection]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -165,10 +179,19 @@ function App() {
     setPage(0);
   };
 
+  const handleSort = (columnId) => {
+    if (sortColumn === columnId) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(columnId);
+      setSortDirection('asc');
+    }
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Header />
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 4 }}>
         <SettingsBar
           host={shortUrlHost}
           onHostChange={(e) => setShortUrlHost(e.target.value)}
@@ -179,7 +202,7 @@ function App() {
           searchTerm={searchTerm}
           onSearchTermChange={e => setSearchTerm(e.target.value)}
         />
-        {error && <Alert severity="error" sx={{ mt: 3 }}><strong>Error:</strong> {error}</Alert>}
+        {error && <Alert severity="error" sx={{ mt: 3, p: 2, boxShadow: 3 }}><strong>Error:</strong> {error}</Alert>}
         {isLoading && <Spinner />}
         {!isLoading && !error && (
           <MappingTable 
@@ -192,6 +215,9 @@ function App() {
             totalMappings={mappings.length}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         )}
       </Box>
