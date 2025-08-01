@@ -383,7 +383,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
             />
             <Typography variant="h6" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>UTM Parameters (Optional)</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}>
+              <Grid>
                 <TextField
                   fullWidth
                   id="utm_source"
@@ -394,7 +394,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
                   placeholder="e.g., google"
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid>
                 <TextField
                   fullWidth
                   id="utm_medium"
@@ -405,7 +405,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
                   placeholder="e.g., cpc"
                 />
               </Grid>
-              <Grid item xs={12} sm={4}>
+              <Grid>
                 <TextField
                   fullWidth
                   id="utm_campaign"
