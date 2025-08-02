@@ -1,5 +1,4 @@
 const express = require('express');
-const { execSync } = require('child_process');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
@@ -64,6 +63,13 @@ const fetchFromKVAndCache = async () => {
   }
   const csvContent = ['Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign', ...mappings.map(m => {
     const longUrl = m.longUrl.replace(/"/g, '""'); // Escape double quotes
+    return `"${m.shortCode}","${longUrl}","${m.utm_source || ''}","${m.utm_medium || ''}","${m.utm_campaign || ''}"`;
+  })];
+  fs.writeFileSync(csvPath, csvContent.join('\n'));
+  return mappings;
+};
+
+// --- Middleware ---
 app.use(cors());
 app.use(express.json());
 
@@ -105,14 +111,12 @@ apiRouter.post('/mappings', async (req, res) => {
     utm_campaign: utm_campaign || '',
   });
 
-  const command = `wrangler kv key put "${shortCode}" '${value}' --namespace-id ${WRANGLER_NAMESPACE_ID}`;
-  const result = runWrangler(command);
-
-  if (result.success) {
+  try {
+    await makeCloudflareApiCall('PUT', `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/values/${shortCode}`, value);
     await fetchFromKVAndCache(); // Update CSV cache
     res.status(201).json({ success: true, data: { shortCode, longUrl } });
-  } else {
-    res.status(500).json({ success: false, error: `Failed to create short URL: ${result.error}` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: `Failed to create short URL: ${error.message}` });
   }
 });
 apiRouter.put('/mappings/:shortCode', async (req, res) => {
@@ -134,14 +138,12 @@ apiRouter.put('/mappings/:shortCode', async (req, res) => {
     utm_campaign: utm_campaign || '',
   });
 
-  const command = `wrangler kv key put "${shortCode}" '${value}' --namespace-id ${WRANGLER_NAMESPACE_ID}`;
-  const result = runWrangler(command);
-
-  if (result.success) {
+  try {
+    await makeCloudflareApiCall('PUT', `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/values/${shortCode}`, value);
     await fetchFromKVAndCache(); // Update CSV cache
     res.json({ success: true, data: { shortCode, longUrl } });
-  } else {
-    res.status(500).json({ success: false, error: `Failed to update short URL: ${result.error}` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: `Failed to update short URL: ${error.message}` });
   }
 });
 
