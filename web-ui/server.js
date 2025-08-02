@@ -54,7 +54,7 @@ async function makeCloudflareApiCall(method, endpoint, body = null) {
     throw new Error(errorMessage);
   }
 
-  return data; // Return raw data, fetchFromKVAndCache will handle parsing
+  return data.result || data; // Return data.result if it exists, otherwise return data
 }
 
 const fetchFromKVAndCache = async () => {
