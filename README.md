@@ -79,9 +79,7 @@ This section covers the one-time setup for the Cloudflare Worker that powers the
 ### Deployment
 
 1.  **Deploy the Worker:**
-    ```bash
-    wrangler deploy
-    ```
+    Deploy your Cloudflare Worker using your preferred method (e.g., `wrangler deploy` if you still use Wrangler for deployment, or through the Cloudflare dashboard).
 
 2.  **Set up a Custom Domain:**
     For a professional look, use your own short domain (e.g., `s.yourdomain.com`):

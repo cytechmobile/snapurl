@@ -26,24 +26,28 @@ Before you begin, you must have the following installed on your computer:
 
 ## Installation and Setup
 
-### Step 1: Authenticate with Cloudflare
+### Step 1: Configure Cloudflare API Credentials
 
-You must log in to your Cloudflare account so `wrangler` can manage your KV namespaces. You only need to do this once.
+To allow the Web UI server to interact with your Cloudflare KV namespace, you need to provide your Cloudflare API credentials. These should be set as environment variables in the `web-ui/.env` file.
 
-Choose **one** of the following methods:
+1.  **Generate a Cloudflare API Token:**
+    *   Go to your Cloudflare dashboard.
+    *   Click on "My Profile" (top right corner) -> "API Tokens" -> "Create Token".
+    *   Use the "Workers KV Storage Read" and "Workers KV Storage Write" templates, or create a custom token with equivalent permissions.
 
-**Method A: Browser Login (Recommended for most users)**
-Run the following command and follow the instructions to log in via your web browser:
-```bash
-wrangler login
-```
+2.  **Find your Cloudflare Account ID:**
+    *   You can find your Account ID on the right sidebar of your Cloudflare dashboard, under "Workers & Pages" or "Overview" for any domain.
 
-**Method B: API Token (More secure for automated environments)**
-1.  Create a Cloudflare API Token with the "Edit Cloudflare Workers" template.
-2.  Set the following environment variables in your terminal, replacing the values with your own credentials:
-    ```bash
-    export CLOUDFLARE_ACCOUNT_ID="your_account_id_here"
-    export CLOUDFLARE_API_TOKEN="your_api_token_here"
+3.  **Find your KV Namespace ID:**
+    *   Go to "Workers & Pages" -> "KV" -> Select your KV namespace.
+    *   The Namespace ID will be displayed on the page.
+
+4.  **Update `web-ui/.env`:**
+    Add the following lines to your `web-ui/.env` file, replacing the placeholder values with your actual credentials:
+    ```
+    CLOUDFLARE_API_TOKEN="your_cloudflare_api_token_here"
+    CLOUDFLARE_ACCOUNT_ID="your_cloudflare_account_id_here"
+    CLOUDFLARE_KV_NAMESPACE_ID="your_cloudflare_kv_namespace_id_here"
     ```
 
 ### Step 2: Configure the Application

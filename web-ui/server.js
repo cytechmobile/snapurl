@@ -14,25 +14,14 @@ const csvPath = path.join(projectRoot, 'url-mappings.csv');
 const clientBuildPath = path.join(__dirname, 'client', 'dist');
 
 // --- Dynamic Configuration ---
-let WRANGLER_NAMESPACE_ID;
-try {
-  const wranglerConfigPath = path.join(projectRoot, 'wrangler.jsonc');
-  const wranglerConfig = fs.readFileSync(wranglerConfigPath, 'utf8');
-  // A simple regex to strip comments, as JSON.parse can't handle them.
-  const jsonc = wranglerConfig.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*|\/\*[\s\S]*?\*\/)/g, (m, g) => g ? "" : m);
-  const config = JSON.parse(jsonc);
-  
-  // Dynamically use the *first* KV namespace defined in the config.
-  const kvBinding = config.kv_namespaces?.[0];
-  
-  if (!kvBinding || !kvBinding.id) {
-    throw new Error("Could not find a valid KV namespace binding in wrangler.jsonc. Please ensure at least one is defined with an 'id'.");
-  }
-  WRANGLER_NAMESPACE_ID = kvBinding.id;
-  console.log(`Successfully loaded KV Namespace ID: ${WRANGLER_NAMESPACE_ID} (from binding '${kvBinding.binding}')`);
-} catch (error) {
-  console.error("FATAL: Could not load configuration from wrangler.jsonc.", error);
-  process.exit(1); // Exit if configuration is missing.
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
+const CLOUDFLARE_KV_NAMESPACE_ID = process.env.CLOUDFLARE_KV_NAMESPACE_ID;
+const CLOUDFLARE_API_BASE_URL = 'https://api.cloudflare.com/client/v4';
+
+if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_KV_NAMESPACE_ID) {
+  console.error("FATAL: Missing Cloudflare API credentials. Please set CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, and CLOUDFLARE_KV_NAMESPACE_ID environment variables.");
+  process.exit(1);
 }
 
 // --- Middleware ---
@@ -51,22 +40,18 @@ const runWrangler = (command) => {
 };
 
 const fetchFromKVAndCache = async () => {
-  const listCommand = `wrangler kv key list --namespace-id ${WRANGLER_NAMESPACE_ID}`;
-  const listResult = runWrangler(listCommand);
-  if (!listResult.success) throw new Error('Failed to list keys from Cloudflare KV.');
-  const keys = JSON.parse(listResult.data);
-  if (!Array.isArray(keys)) throw new Error('Wrangler returned an unexpected format for keys.');
+  const listKeysEndpoint = `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/keys`;
+  const keysResult = await makeCloudflareApiCall('GET', listKeysEndpoint);
   const mappings = [];
-  for (const key of keys) {
-    const getCommand = `wrangler kv key get "${key.name}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
-    const getResult = runWrangler(getCommand);
-    if (getResult.success) {
-      try {
-        const value = JSON.parse(getResult.data);
-        mappings.push({ shortCode: key.name, longUrl: value.longUrl });
-      } catch (e) {
-        mappings.push({ shortCode: key.name, longUrl: getResult.data.trim() });
-      }
+
+  for (const key of keysResult) {
+    const getValueEndpoint = `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/values/${key.name}`;
+    const value = await makeCloudflareApiCall('GET', getValueEndpoint);
+    try {
+      const parsedValue = JSON.parse(value);
+      mappings.push({ shortCode: key.name, longUrl: parsedValue.longUrl, utm_source: parsedValue.utm_source, utm_medium: parsedValue.utm_medium, utm_campaign: parsedValue.utm_campaign });
+    } catch (e) {
+      mappings.push({ shortCode: key.name, longUrl: value.trim() });
     }
   }
   const csvContent = ['Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign', ...mappings.map(m => {
@@ -158,13 +143,12 @@ apiRouter.put('/mappings/:shortCode', async (req, res) => {
 apiRouter.delete('/mappings/:shortCode', async (req, res) => {
   const { shortCode } = req.params;
   if (!shortCode) return res.status(400).json({ success: false, error: 'Short code is required.' });
-  const command = `wrangler kv key delete "${shortCode}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
-  const result = runWrangler(command);
-  if (result.success) {
+  try {
+    await makeCloudflareApiCall('DELETE', `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/values/${shortCode}`);
     await fetchFromKVAndCache(); // Update CSV cache
     res.json({ success: true });
-  } else {
-    res.status(500).json({ success: false, error: `Failed to delete short URL: ${result.error}` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: `Failed to delete short URL: ${error.message}` });
   }
 });
 
