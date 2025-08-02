@@ -37,13 +37,24 @@ async function makeCloudflareApiCall(method, endpoint, body = null) {
   }
 
   const response = await fetch(url, options);
-  const data = await response.json();
+  const contentType = response.headers.get('content-type');
+  let data;
 
-  if (!response.ok) {
-    throw new Error(data.errors?.[0]?.message || `Cloudflare API error: ${response.status}`);
+  if (contentType && contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    data = await response.text();
   }
 
-  return data.result;
+  if (!response.ok) {
+    // If it's a JSON error, use its message; otherwise, use the raw text or status
+    const errorMessage = (typeof data === 'object' && data.errors && data.errors[0] && data.errors[0].message)
+      ? data.errors[0].message
+      : `Cloudflare API error: ${response.status} - ${data}`;
+    throw new Error(errorMessage);
+  }
+
+  return data; // Return raw data, fetchFromKVAndCache will handle parsing
 }
 
 const fetchFromKVAndCache = async () => {
