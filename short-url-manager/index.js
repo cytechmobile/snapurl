@@ -58,9 +58,19 @@ class URLShortenerTUI {
       
       console.log(chalk.green(`✓ Loaded ${this.mappings.size} URL mappings from Cloudflare KV\n`));
     } catch (error) {
-      console.log(chalk.yellow(`⚠ Error loading from Cloudflare KV: ${error.message}\n`));
-      console.log(chalk.gray('Make sure wrangler is installed and you\'re in the correct directory\n'));
-      console.log(chalk.gray('Falling back to CSV file...\n'));
+      console.log(chalk.red(`
+❌ Error loading from Cloudflare KV: ${error.message}
+`));
+      console.log(chalk.yellow('💡 Please ensure:
+'));
+      console.log(chalk.yellow('   - Wrangler CLI is installed (npm install -g wrangler)
+'));
+      console.log(chalk.yellow('   - You are authenticated with Cloudflare (wrangler login)
+'));
+      console.log(chalk.yellow('   - Your Cloudflare account has access to the KV namespace
+'));
+      console.log(chalk.gray('Falling back to CSV file...
+'));
       await this.loadFromCSV();
     }
   }
@@ -238,8 +248,17 @@ class URLShortenerTUI {
       // Auto-export to CSV
       await this.exportToCSV(false);
     } catch (error) {
-      console.log(chalk.red(`\n❌ Error creating short URL: ${error.message}\n`));
-      console.log(chalk.yellow('Make sure wrangler is installed and you\'re authenticated\n'));
+      console.log(chalk.red(`
+❌ Error creating short URL: ${error.message}
+`));
+      console.log(chalk.yellow('💡 Please ensure:
+'));
+      console.log(chalk.yellow('   - Wrangler CLI is installed (npm install -g wrangler)
+'));
+      console.log(chalk.yellow('   - You are authenticated with Cloudflare (wrangler login)
+'));
+      console.log(chalk.yellow('   - Your Cloudflare account has access to the KV namespace
+'));
     }
 
     await this.pressEnterToContinue();
