@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { nanoid } from 'nanoid';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Container, Box, Typography, Paper, TextField, Button, IconButton, CircularProgress, Alert, TablePagination } from '@mui/material';
+import { Container, Box, Typography, Paper, TextField, Button, IconButton, CircularProgress, Alert, TablePagination, Snackbar } from '@mui/material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { AppBar, Toolbar as MuiToolbar } from '@mui/material'; // Renamed Toolbar to MuiToolbar to avoid conflict
-import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward, ContentCopy } from '@mui/icons-material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Grid } from '@mui/material';
 
 
@@ -25,6 +25,8 @@ function App() {
   const [shortUrlHost, setShortUrlHost] = useState(
     () => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK
   );
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     localStorage.setItem('shortUrlHost', shortUrlHost);
@@ -150,6 +152,24 @@ function App() {
     }
   };
 
+  const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setSnackbarMessage('Copied to clipboard!');
+      setSnackbarOpen(true);
+    }, (err) => {
+      setSnackbarMessage('Failed to copy!');
+      setSnackbarOpen(true);
+      console.error('Could not copy text: ', err);
+    });
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
   const filteredAndSortedMappings = useMemo(() => {
     const filtered = mappings.filter(m =>
       m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -214,6 +234,7 @@ function App() {
             onDelete={handleDelete}
             onEdit={handleShowEditModal}
             onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)} 
+            onCopyToClipboard={(shortCode) => handleCopyToClipboard(`${shortUrlHost}/${shortCode}`)}
             page={page}
             rowsPerPage={rowsPerPage}
             totalMappings={filteredAndSortedMappings.length}
@@ -239,6 +260,12 @@ function App() {
           onClose={() => setQrCodeValue(null)}
         />
       )}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+      />
     </Container>
   );
 }
@@ -293,7 +320,7 @@ const Toolbar = ({ onRefresh, onShowCreateModal, searchTerm, onSearchTermChange 
   </Box>
 );
 
-const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, sortDirection, onSort, page, rowsPerPage, totalMappings, onPageChange, onRowsPerPageChange }) => {
+const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, onCopyToClipboard, sortColumn, sortDirection, onSort, page, rowsPerPage, totalMappings, onPageChange, onRowsPerPageChange }) => {
   if (mappings.length === 0) {
     return <Typography variant="body1" sx={{ mt: 3, textAlign: 'center' }}>No URL mappings found.</Typography>;
   }
@@ -327,6 +354,9 @@ const MappingTable = ({ mappings, onDelete, onEdit, onShowQrCode, sortColumn, so
                 </a>
               </TableCell>
               <TableCell align="right">
+                <IconButton onClick={() => onCopyToClipboard(mapping.shortCode)} color="primary" aria-label="copy short url">
+                  <ContentCopy />
+                </IconButton>
                 <IconButton onClick={() => onShowQrCode(mapping.shortCode)} color="primary" aria-label="show QR code">
                   <QrCode />
                 </IconButton>
