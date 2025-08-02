@@ -24,43 +24,32 @@ if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_KV_NAMESPACE_
   process.exit(1);
 }
 
+async function makeCloudflareApiCall(method, endpoint, body = null) {
+  const headers = {
+    'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+    'Content-Type': 'application/json',
+  };
+
+  const url = `${CLOUDFLARE_API_BASE_URL}${endpoint}`;
+  const options = { method, headers };
+
+  if (body !== null) {
+    options.body = typeof body === 'object' ? JSON.stringify(body) : body;
+  }
+
+  const response = await fetch(url, options);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.errors?.[0]?.message || `Cloudflare API error: ${response.status}`);
+  }
+
+  return data.result;
+}
+
 // --- Middleware ---
 app.use(cors());
 app.use(express.json());
-
-// --- Wrangler Helpers ---
-const runWrangler = (command) => {
-  try {
-    const fullCommand = `${command} --remote --config wrangler.jsonc`;
-    const output = execSync(fullCommand, { encoding: 'utf8', cwd: projectRoot });
-    return { success: true, data: output };
-  } catch (error) {
-    return { success: false, error: error.stderr || error.message };
-  }
-};
-
-const fetchFromKVAndCache = async () => {
-  const listKeysEndpoint = `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/keys`;
-  const keysResult = await makeCloudflareApiCall('GET', listKeysEndpoint);
-  const mappings = [];
-
-  for (const key of keysResult) {
-    const getValueEndpoint = `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/values/${key.name}`;
-    const value = await makeCloudflareApiCall('GET', getValueEndpoint);
-    try {
-      const parsedValue = JSON.parse(value);
-      mappings.push({ shortCode: key.name, longUrl: parsedValue.longUrl, utm_source: parsedValue.utm_source, utm_medium: parsedValue.utm_medium, utm_campaign: parsedValue.utm_campaign });
-    } catch (e) {
-      mappings.push({ shortCode: key.name, longUrl: value.trim() });
-    }
-  }
-  const csvContent = ['Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign', ...mappings.map(m => {
-    const longUrl = m.longUrl.replace(/"/g, '""'); // Escape double quotes
-    return `"${m.shortCode}","${longUrl}","${m.utm_source || ''}","${m.utm_medium || ''}","${m.utm_campaign || ''}"`;
-  })];
-  fs.writeFileSync(csvPath, csvContent.join('\n'));
-  return mappings;
-};
 
 // --- API Routes ---
 const apiRouter = express.Router();
