@@ -426,3 +426,6 @@ class URLShortenerTUI {
 }
 
 export default URLShortenerTUI;
+
+const tui = new URLShortenerTUI();
+tui.start();

@@ -7,7 +7,7 @@
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"test": "c8 vitest --root test run",
-		"tui": "node tui.js"
+		"tui": "node short-url-manager/index.js"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.8.19",
