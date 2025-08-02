@@ -3,7 +3,7 @@ const { execSync } = require('child_process');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const fetch = require('node-fetch'); // Import node-fetch
+// const fetch = require('node-fetch'); // Import node-fetch - Removed as it causes issues with CommonJS
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -176,7 +176,13 @@ apiRouter.get('/validate-url', async (req, res) => {
   }
 
   try {
-    const response = await fetch(url, { method: 'HEAD', timeout: 5000 }); // 5-second timeout
+    const { default: fetch } = await import('node-fetch'); // Dynamic import
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+
+    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (response.ok) {
       res.json({ isValid: true, message: `URL is reachable (Status: ${response.status})` });
     } else {
