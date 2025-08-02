@@ -134,6 +134,10 @@ To use this TUI, team members need:
 - Verify you have write permissions to the KV namespace
 - Check that the short code doesn't already exist
 
+### Enhanced Error Messages
+
+Error messages throughout the TUI have been made more descriptive and actionable, guiding users on how to resolve common issues related to Cloudflare KV interaction and Wrangler CLI setup.
+
 ### "CSV file not found" warning
 
 - This is normal on first run - the CSV file will be created automatically
