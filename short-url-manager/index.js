@@ -149,8 +149,9 @@ class URLShortenerTUI {
         message: 'Enter the long URL to shorten:',
         validate: (input) => {
           if (!input.trim()) return 'URL cannot be empty';
-          if (!input.startsWith('http://') && !input.startsWith('https://')) {
-            return 'URL must start with http:// or https://';
+          const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+          if (!urlRegex.test(input)) {
+            return 'Please enter a valid URL (e.g., https://example.com).';
           }
           return true;
         }

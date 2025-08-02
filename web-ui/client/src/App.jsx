@@ -411,8 +411,10 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
       setError('Long URL cannot be empty.');
       return;
     }
-    if (!formData.longUrl.startsWith('http://') && !formData.longUrl.startsWith('https://')) {
-      setError('URL must start with http:// or https://');
+    // More robust URL validation regex
+    const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+    if (!urlRegex.test(formData.longUrl)) {
+      setError('Please enter a valid URL (e.g., https://example.com).');
       return;
     }
     if (formData.customShortCode && !/^[a-zA-Z0-9_-]+$/.test(formData.customShortCode)) {

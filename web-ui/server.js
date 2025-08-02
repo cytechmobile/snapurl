@@ -101,6 +101,10 @@ apiRouter.post('/mappings', async (req, res) => {
   if (!shortCode || !longUrl) {
     return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
   }
+  const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+  if (!urlRegex.test(longUrl)) {
+    return res.status(400).json({ success: false, error: 'Please enter a valid long URL.' });
+  }
 
   // Store the data as a JSON object
   const value = JSON.stringify({
@@ -125,6 +129,10 @@ apiRouter.put('/mappings/:shortCode', async (req, res) => {
   const { longUrl, utm_source, utm_medium, utm_campaign } = req.body;
   if (!shortCode || !longUrl) {
     return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
+  }
+  const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+  if (!urlRegex.test(longUrl)) {
+    return res.status(400).json({ success: false, error: 'Please enter a valid long URL.' });
   }
 
   // Store the data as a JSON object
