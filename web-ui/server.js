@@ -3,6 +3,7 @@ const { execSync } = require('child_process');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const fetch = require('node-fetch'); // Import node-fetch
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -166,6 +167,30 @@ apiRouter.delete('/mappings/:shortCode', async (req, res) => {
     res.status(500).json({ success: false, error: `Failed to delete short URL: ${result.error}` });
   }
 });
+
+// New API endpoint for URL validation
+apiRouter.get('/validate-url', async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).json({ isValid: false, message: 'URL parameter is required.' });
+  }
+
+  try {
+    const response = await fetch(url, { method: 'HEAD', timeout: 5000 }); // 5-second timeout
+    if (response.ok) {
+      res.json({ isValid: true, message: `URL is reachable (Status: ${response.status})` });
+    } else {
+      res.json({ isValid: false, message: `URL returned an error status: ${response.status}` });
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      res.json({ isValid: false, message: 'URL validation timed out.' });
+    } else {
+      res.json({ isValid: false, message: `Could not reach URL: ${error.message}` });
+    }
+  }
+});
+
 app.use('/api', apiRouter);
 
 // --- Frontend Serving ---

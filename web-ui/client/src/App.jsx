@@ -395,7 +395,51 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [urlValidationStatus, setUrlValidationStatus] = useState(null); // null, 'valid', 'invalid', 'checking'
+  const [urlValidationMessage, setUrlValidationMessage] = useState('');
   const isEditMode = !!initialData.shortCode;
+
+  // Debounce utility
+  const debounce = (func, delay) => {
+    let timeout;
+    return function(...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  };
+
+  const validateLongUrl = useMemo(() => debounce(async (url) => {
+    if (!url) {
+      setUrlValidationStatus(null);
+      setUrlValidationMessage('');
+      return;
+    }
+
+    setUrlValidationStatus('checking');
+    setUrlValidationMessage('Checking URL...');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/validate-url?url=${encodeURIComponent(url)}`);
+      const result = await response.json();
+
+      if (result.isValid) {
+        setUrlValidationStatus('valid');
+        setUrlValidationMessage('URL is reachable.');
+      } else {
+        setUrlValidationStatus('invalid');
+        setUrlValidationMessage(result.message || 'URL is not reachable.');
+      }
+    } catch (err) {
+      setUrlValidationStatus('invalid');
+      setUrlValidationMessage('Error checking URL. Please try again.');
+      console.error('URL validation API error:', err);
+    }
+  }, 500), []);
+
+  useEffect(() => {
+    validateLongUrl(formData.longUrl);
+  }, [formData.longUrl, validateLongUrl]);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -406,12 +450,11 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
     e.preventDefault();
     setError('');
 
-    // --- Validation ---
+    // --- Client-side validation (basic format check) ---
     if (!formData.longUrl) {
       setError('Long URL cannot be empty.');
       return;
     }
-    // More robust URL validation regex
     const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
     if (!urlRegex.test(formData.longUrl)) {
       setError('Please enter a valid URL (e.g., https://example.com).');
@@ -423,6 +466,12 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
     }
     if (!isEditMode && existingShortCodes.includes(formData.customShortCode)) {
       setError('This short code already exists.');
+      return;
+    }
+
+    // --- Server-side URL reachability check ---
+    if (urlValidationStatus !== 'valid') {
+      setError(urlValidationMessage || 'Please ensure the long URL is valid and reachable.');
       return;
     }
 
@@ -456,6 +505,8 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
               onChange={handleChange}
               placeholder="https://example.com/my-very-long-url"
               type="url"
+              error={urlValidationStatus === 'invalid'}
+              helperText={urlValidationMessage}
             />
             <TextField
               margin="normal"
@@ -509,7 +560,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
+        <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting || urlValidationStatus !== 'valid'}>
           {isSubmitting ? <CircularProgress size={24} /> : (isEditMode ? 'Save Changes' : 'Create')}
         </Button>
       </DialogActions>
