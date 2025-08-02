@@ -20,6 +20,14 @@ You can manage your short links using two provided tools:
 1.  **Web UI (Recommended):** A user-friendly, local web interface for creating, deleting, and viewing links, complete with QR code generation. See the [Web UI README](./web-ui/README.md) for setup instructions.
 2.  **TUI (Terminal UI):** A command-line interface for managing links directly from your terminal. See the [TUI README](./short-url-manager/README.md) for details.
 
+### Enhanced User Feedback and Validation
+
+Both the Web UI and TUI have been improved to provide more consistent and user-friendly feedback:
+
+*   **Clearer Error Messages:** Error messages are now more descriptive and actionable, guiding users on how to resolve issues (e.g., missing Wrangler CLI, authentication problems).
+*   **Client-Side Validation (Web UI):** The Web UI includes enhanced client-side validation for URL inputs and custom short codes, providing immediate feedback and preventing common input errors.
+*   **Notifications (Web UI):** Success and error notifications are displayed using snackbars for a better user experience during operations like creating, updating, and deleting short URLs.
+
 ## Core Setup (Cloudflare Worker)
 
 This section covers the one-time setup for the Cloudflare Worker that powers the redirection service.

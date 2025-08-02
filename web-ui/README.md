@@ -9,6 +9,8 @@ This directory contains a local-only web application that provides a graphical u
 -   **Configurable Hostname:** Set your short link domain directly in the UI (persisted in browser storage).
 -   **UTM Parameter Support:** Add `utm_source`, `utm_medium`, and `utm_campaign` parameters when creating links.
 -   **Search and Refresh:** Easily find links across all pages and refresh the local cache from Cloudflare KV.
+-   **URL Validation:** Real-time validation of long URLs for reachability and format.
+-   **Enhanced User Feedback:** Improved error messages and notifications for a smoother user experience.
 -   **Pagination:** Navigate through large sets of short URLs with customizable items per page.
 
 ## How It Works
