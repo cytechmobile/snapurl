@@ -47,7 +47,23 @@ async function makeCloudflareApiCall(method, endpoint, body = null) {
   return data.result;
 }
 
-// --- Middleware ---
+const fetchFromKVAndCache = async () => {
+  const listKeysEndpoint = `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/keys`;
+  const keysResult = await makeCloudflareApiCall('GET', listKeysEndpoint);
+  const mappings = [];
+
+  for (const key of keysResult) {
+    const getValueEndpoint = `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/values/${key.name}`;
+    const value = await makeCloudflareApiCall('GET', getValueEndpoint);
+    try {
+      const parsedValue = JSON.parse(value);
+      mappings.push({ shortCode: key.name, longUrl: parsedValue.longUrl, utm_source: parsedValue.utm_source, utm_medium: parsedValue.utm_medium, utm_campaign: parsedValue.utm_campaign });
+    } catch (e) {
+      mappings.push({ shortCode: key.name, longUrl: value.trim() });
+    }
+  }
+  const csvContent = ['Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign', ...mappings.map(m => {
+    const longUrl = m.longUrl.replace(/
 app.use(cors());
 app.use(express.json());
 
