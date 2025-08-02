@@ -98,8 +98,12 @@ function App() {
         const result = await response.json();
         throw new Error(result.error || 'Failed to create mapping.');
       }
+      setSnackbarMessage('Short URL created successfully!');
+      setSnackbarOpen(true);
     } catch (err) {
       setError(err.message);
+      setSnackbarMessage(`Error creating short URL: ${err.message}`);
+      setSnackbarOpen(true);
       // Revert the optimistic update on error
       setMappings(prev => prev.filter(m => m.shortCode !== shortCode));
     }
@@ -124,8 +128,12 @@ function App() {
         const result = await response.json();
         throw new Error(result.error || 'Failed to update mapping.');
       }
+      setSnackbarMessage('Short URL updated successfully!');
+      setSnackbarOpen(true);
     } catch (err) {
       setError(err.message);
+      setSnackbarMessage(`Error updating short URL: ${err.message}`);
+      setSnackbarOpen(true);
       // Revert the optimistic update on error
       setMappings(originalMappings);
     }
@@ -144,8 +152,12 @@ function App() {
           const result = await response.json();
           throw new Error(result.error || 'Failed to delete mapping.');
         }
+        setSnackbarMessage('Short URL deleted successfully!');
+        setSnackbarOpen(true);
       } catch (err) {
         setError(err.message);
+        setSnackbarMessage(`Error deleting short URL: ${err.message}`);
+        setSnackbarOpen(true);
         // Revert the optimistic update on error
         setMappings(originalMappings);
       }
@@ -393,7 +405,9 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
     utm_campaign: '',
     ...initialData,
   });
-  const [error, setError] = useState('');
+  const [modalError, setModalError] = useState('');
+  const [longUrlInputError, setLongUrlInputError] = useState('');
+  const [customShortCodeInputError, setCustomShortCodeInputError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [urlValidationStatus, setUrlValidationStatus] = useState(null); // null, 'valid', 'invalid', 'checking'
   const [urlValidationMessage, setUrlValidationMessage] = useState('');
@@ -444,34 +458,52 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
+    // Clear specific input errors when user types
+    if (id === 'longUrl') {
+      setLongUrlInputError('');
+    } else if (id === 'customShortCode') {
+      setCustomShortCodeInputError('');
+    }
+    setModalError(''); // Clear general modal error on any change
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setModalError('');
+    setLongUrlInputError('');
+    setCustomShortCodeInputError('');
+
+    let hasError = false;
 
     // --- Client-side validation (basic format check) ---
     if (!formData.longUrl) {
-      setError('Long URL cannot be empty.');
-      return;
+      setLongUrlInputError('Long URL cannot be empty.');
+      hasError = true;
+    } else {
+      const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+      if (!urlRegex.test(formData.longUrl)) {
+        setLongUrlInputError('Please enter a valid URL (e.g., https://example.com or http://example.com).');
+        hasError = true;
+      }
     }
-    const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
-    if (!urlRegex.test(formData.longUrl)) {
-      setError('Please enter a valid URL (e.g., https://example.com).');
-      return;
-    }
-    if (formData.customShortCode && !/^[a-zA-Z0-9_-]+$/.test(formData.customShortCode)) {
-      setError('Short code can only contain letters, numbers, hyphens, and underscores.');
-      return;
-    }
-    if (!isEditMode && existingShortCodes.includes(formData.customShortCode)) {
-      setError('This short code already exists.');
-      return;
+
+    if (formData.customShortCode) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(formData.customShortCode)) {
+        setCustomShortCodeInputError('Short code can only contain letters, numbers, hyphens, and underscores.');
+        hasError = true;
+      } else if (!isEditMode && existingShortCodes.includes(formData.customShortCode)) {
+        setCustomShortCodeInputError('This short code already exists.');
+        hasError = true;
+      }
     }
 
     // --- Server-side URL reachability check ---
     if (urlValidationStatus !== 'valid') {
-      setError(urlValidationMessage || 'Please ensure the long URL is valid and reachable.');
+      setModalError(urlValidationMessage || 'Please ensure the long URL is valid and reachable.');
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -480,7 +512,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
       await onSave(formData);
       // No need to call onClose here, as the parent component will handle it.
     } catch (err) {
-      setError(err.message);
+      setModalError(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -490,7 +522,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
     <Dialog open onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>{isEditMode ? 'Edit Short URL' : 'Create New Short URL'}</DialogTitle>
       <DialogContent dividers sx={{ p: 3, boxShadow: 1 }}>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {modalError && <Alert severity="error" sx={{ mb: 2 }}>{modalError}</Alert>}
         <form onSubmit={handleSubmit}>
           <fieldset disabled={isSubmitting}>
             <TextField
@@ -505,8 +537,8 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
               onChange={handleChange}
               placeholder="https://example.com/my-very-long-url"
               type="url"
-              error={urlValidationStatus === 'invalid'}
-              helperText={urlValidationMessage}
+              error={urlValidationStatus === 'invalid' || !!longUrlInputError}
+              helperText={urlValidationMessage || longUrlInputError}
             />
             <TextField
               margin="normal"
@@ -518,6 +550,8 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
               onChange={handleChange}
               placeholder={isEditMode ? '' : 'my-custom-code (or leave blank)'}
               disabled={isEditMode}
+              error={!!customShortCodeInputError}
+              helperText={customShortCodeInputError}
             />
             <Typography variant="h6" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>UTM Parameters (Optional)</Typography>
             <Grid container spacing={2}>
