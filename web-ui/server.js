@@ -63,7 +63,7 @@ const fetchFromKVAndCache = async () => {
     }
   }
   const csvContent = ['Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign', ...mappings.map(m => {
-    const longUrl = m.longUrl.replace(/
+    const longUrl = m.longUrl.replace(/"/g, '""'); // Escape double quotes
 app.use(cors());
 app.use(express.json());
 
