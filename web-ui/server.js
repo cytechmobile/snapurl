@@ -68,7 +68,10 @@ const fetchFromKVAndCache = async () => {
       }
     }
   }
-  const csvContent = ['Short URL,Long URL', ...mappings.map(m => `${m.shortCode},${m.longUrl}`)];
+  const csvContent = ['Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign', ...mappings.map(m => {
+    const longUrl = m.longUrl.replace(/"/g, '""'); // Escape double quotes
+    return `"${m.shortCode}","${longUrl}","${m.utm_source || ''}","${m.utm_medium || ''}","${m.utm_campaign || ''}"`;
+  })];
   fs.writeFileSync(csvPath, csvContent.join('\n'));
   return mappings;
 };
@@ -81,8 +84,8 @@ apiRouter.get('/mappings', async (req, res) => {
     const csvContent = fs.readFileSync(csvPath, 'utf8');
     const lines = csvContent.split('\n').slice(1);
     const mappings = lines.map(line => {
-      const [shortCode, longUrl] = line.split(',');
-      return { shortCode, longUrl };
+      const [shortCode, longUrl, utm_source, utm_medium, utm_campaign] = line.split(',').map(s => s.replace(/^"|"$/g, '').replace(/""/g, '"'));
+      return { shortCode, longUrl, utm_source, utm_medium, utm_campaign };
     }).filter(m => m.shortCode && m.longUrl);
     return res.json({ success: true, data: mappings });
   }
@@ -111,6 +114,7 @@ apiRouter.post('/mappings', async (req, res) => {
   const result = runWrangler(command);
 
   if (result.success) {
+    await fetchFromKVAndCache(); // Update CSV cache
     res.status(201).json({ success: true, data: { shortCode, longUrl } });
   } else {
     res.status(500).json({ success: false, error: `Failed to create short URL: ${result.error}` });
@@ -135,6 +139,7 @@ apiRouter.put('/mappings/:shortCode', async (req, res) => {
   const result = runWrangler(command);
 
   if (result.success) {
+    await fetchFromKVAndCache(); // Update CSV cache
     res.json({ success: true, data: { shortCode, longUrl } });
   } else {
     res.status(500).json({ success: false, error: `Failed to update short URL: ${result.error}` });
@@ -147,6 +152,7 @@ apiRouter.delete('/mappings/:shortCode', async (req, res) => {
   const command = `wrangler kv key delete "${shortCode}" --namespace-id ${WRANGLER_NAMESPACE_ID}`;
   const result = runWrangler(command);
   if (result.success) {
+    await fetchFromKVAndCache(); // Update CSV cache
     res.json({ success: true });
   } else {
     res.status(500).json({ success: false, error: `Failed to delete short URL: ${result.error}` });
@@ -171,6 +177,17 @@ app.use((req, res, next) => {
 });
 
 // --- Start Server ---
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+// Ensure CSV is populated on server startup
+(async () => {
+  try {
+    console.log('Populating CSV cache from Cloudflare KV on server startup...');
+    await fetchFromKVAndCache();
+    console.log('CSV cache populated successfully.');
+  } catch (error) {
+    console.error('Failed to populate CSV cache on startup:', error.message);
+  }
+
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+})();
