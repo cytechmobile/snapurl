@@ -3,6 +3,7 @@ const { execSync } = require('child_process');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+// const fetch = require('node-fetch'); // Import node-fetch - Removed as it causes issues with CommonJS
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -101,6 +102,10 @@ apiRouter.post('/mappings', async (req, res) => {
   if (!shortCode || !longUrl) {
     return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
   }
+  const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+  if (!urlRegex.test(longUrl)) {
+    return res.status(400).json({ success: false, error: 'Please enter a valid long URL.' });
+  }
 
   // Store the data as a JSON object
   const value = JSON.stringify({
@@ -125,6 +130,10 @@ apiRouter.put('/mappings/:shortCode', async (req, res) => {
   const { longUrl, utm_source, utm_medium, utm_campaign } = req.body;
   if (!shortCode || !longUrl) {
     return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
+  }
+  const urlRegex = /^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
+  if (!urlRegex.test(longUrl)) {
+    return res.status(400).json({ success: false, error: 'Please enter a valid long URL.' });
   }
 
   // Store the data as a JSON object
@@ -158,6 +167,40 @@ apiRouter.delete('/mappings/:shortCode', async (req, res) => {
     res.status(500).json({ success: false, error: `Failed to delete short URL: ${result.error}` });
   }
 });
+
+// New API endpoint for URL validation
+apiRouter.get('/validate-url', async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).json({ isValid: false, message: 'URL parameter is required.' });
+  }
+
+  try {
+    const { default: fetch } = await import('node-fetch'); // Dynamic import
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+
+    const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      res.json({ isValid: true, message: `URL is reachable (Status: ${response.status})` });
+    } else {
+      res.json({ isValid: false, message: `URL returned an error status: ${response.status}` });
+    }
+  } catch (error) {
+    let message = 'Could not reach URL. Please check the address and try again.';
+    if (error.name === 'AbortError') {
+      message = 'URL validation timed out. The server took too long to respond.';
+    } else if (error.code === 'ENOTFOUND') {
+      message = 'The domain name could not be resolved. Please check for typos.';
+    } else if (error.code === 'ECONNREFUSED') {
+      message = 'The connection was refused. The server might be down or the URL is incorrect.';
+    }
+    res.json({ isValid: false, message: message });
+  }
+});
+
 app.use('/api', apiRouter);
 
 // --- Frontend Serving ---
