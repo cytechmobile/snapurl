@@ -189,11 +189,15 @@ apiRouter.get('/validate-url', async (req, res) => {
       res.json({ isValid: false, message: `URL returned an error status: ${response.status}` });
     }
   } catch (error) {
+    let message = 'Could not reach URL. Please check the address and try again.';
     if (error.name === 'AbortError') {
-      res.json({ isValid: false, message: 'URL validation timed out.' });
-    } else {
-      res.json({ isValid: false, message: `Could not reach URL: ${error.message}` });
+      message = 'URL validation timed out. The server took too long to respond.';
+    } else if (error.code === 'ENOTFOUND') {
+      message = 'The domain name could not be resolved. Please check for typos.';
+    } else if (error.code === 'ECONNREFUSED') {
+      message = 'The connection was refused. The server might be down or the URL is incorrect.';
     }
+    res.json({ isValid: false, message: message });
   }
 });
 
