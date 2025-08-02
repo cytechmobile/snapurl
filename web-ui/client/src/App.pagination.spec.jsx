@@ -4,7 +4,7 @@ import App from './App';
 
 // Mock global fetch
 beforeEach(() => {
-  global.fetch = vi.fn((url) => {
+  window.fetch = vi.fn((url) => {
     if (url.includes('/mappings')) {
       // Generate 25 dummy mappings for pagination tests
       const dummyMappings = Array.from({ length: 25 }, (_, i) => ({
@@ -81,7 +81,7 @@ describe('App Pagination', () => {
 
   it('should hide pagination controls if there is only one page', async () => {
     // Mock fetch to return fewer items (e.g., 5 items, less than default 10 per page)
-    global.fetch = vi.fn(() =>
+    window.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ success: true, data: Array.from({ length: 5 }, (_, i) => ({ shortCode: `single${i + 1}`, longUrl: `https://single.com/${i + 1}` })) }),

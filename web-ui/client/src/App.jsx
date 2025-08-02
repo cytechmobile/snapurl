@@ -512,7 +512,7 @@ const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
       await onSave(formData);
       // No need to call onClose here, as the parent component will handle it.
     } catch (err) {
-      setError(err.message);
+      setModalError(err.message);
     } finally {
       setIsSubmitting(false);
     }
