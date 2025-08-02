@@ -74,14 +74,6 @@ Navigate to the project's root directory in your terminal and run the following 
 1.  **Install Server Dependencies:**
     ```bash
     # Navigate to the web-ui/ directory
-    cd web-ui
-    npm install
-    ```
-
-2.  **Install Client Dependencies:**
-    ```bash
-    # Navigate to the web-ui/client/ directory
-    cd client
     npm install
     ```
 

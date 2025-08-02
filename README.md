@@ -22,7 +22,7 @@ You can manage your short links using two provided tools:
 
 ### Enhanced User Feedback and Validation
 
-Both the Web UI and TUI have been improved to provide more consistent and user-friendly feedback:
+The Web UI has been improved to provide more consistent and user-friendly feedback:
 
 *   **Clearer Error Messages:** Error messages are now more descriptive and actionable, guiding users on how to resolve issues (e.g., missing Wrangler CLI, authentication problems).
 *   **Client-Side Validation (Web UI):** The Web UI includes enhanced client-side validation for URL inputs and custom short codes, providing immediate feedback and preventing common input errors.
