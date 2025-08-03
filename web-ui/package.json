@@ -1,20 +1,25 @@
 {
-  "name": "snapurl-web-ui",
-  "version": "1.0.0",
-  "description": "Web UI for SnapURL",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "jsdom": "^26.1.0",
-    "node-fetch": "^3.3.2"
-  }
+	"name": "snapurl-web-ui",
+	"version": "1.0.0",
+	"description": "Web UI for SnapURL",
+	"main": "server.js",
+	"scripts": {
+		"start": "node server.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/your-username/snapurl.git"
+	},
+	"keywords": [],
+	"author": "Your Name",
+	"license": "GPL-3.0-or-later",
+	"type": "commonjs",
+	"dependencies": {
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.1",
+		"express": "^5.1.0",
+		"jsdom": "^26.1.0",
+		"node-fetch": "^3.3.2"
+	}
 }
