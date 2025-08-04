@@ -2,7 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-// const fetch = require('node-fetch'); // Import node-fetch - Removed as it causes issues with CommonJS
+const session = require('express-session');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const cookieParser = require('cookie-parser');
+
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -18,12 +22,48 @@ const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const CLOUDFLARE_KV_NAMESPACE_ID = process.env.CLOUDFLARE_KV_NAMESPACE_ID;
 const CLOUDFLARE_API_BASE_URL = 'https://api.cloudflare.com/client/v4';
 
-if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_KV_NAMESPACE_ID) {
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const AUTHORIZED_GOOGLE_EMAILS = process.env.AUTHORIZED_GOOGLE_EMAILS ? process.env.AUTHORIZED_GOOGLE_EMAILS.split(',') : [];
+
+if (!CLOUDFLARE_API_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_KV_NAMESPACE_ID || !GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SESSION_SECRET) {
 	console.error(
-		'FATAL: Missing Cloudflare API credentials. Please set CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, and CLOUDFLARE_KV_NAMESPACE_ID environment variables.'
+		'FATAL: Missing required environment variables. Please set CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_KV_NAMESPACE_ID, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SESSION_SECRET, and AUTHORIZED_GOOGLE_EMAILS.'
 	);
 	process.exit(1);
 }
+
+app.use(cookieParser());
+app.use(session({
+	secret: SESSION_SECRET,
+	resave: false,
+	saveUninitialized: false,
+	cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new GoogleStrategy({
+    clientID: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    callbackURL: "/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    // Store accessToken on the profile object so it's available for logout
+    profile.accessToken = accessToken;
+    return cb(null, profile);
+  }
+));
+
+passport.serializeUser(function(user, cb) {
+  cb(null, user);
+});
+
+passport.deserializeUser(function(obj, cb) {
+  cb(null, obj);
+});
 
 async function makeCloudflareApiCall(method, endpoint, body = null) {
 	const headers = {
@@ -96,9 +136,72 @@ const fetchFromKVAndCache = async () => {
 app.use(cors());
 app.use(express.json());
 
+// Authentication Routes
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'], prompt: 'consent' }));
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
+  (req, res) => {
+    // Successful authentication, redirect home.
+    res.redirect('/');
+  }
+);
+
+app.get('/auth/logout', (req, res, next) => {
+  if (req.user && req.user.accessToken) {
+    // Revoke the Google Access Token
+    fetch(`https://oauth2.googleapis.com/revoke?token=${req.user.accessToken}`,
+      { method: 'POST' }
+    ).then(() => {
+      req.logout((err) => {
+        if (err) { return next(err); }
+        req.session.destroy((err) => {
+          if (err) { return next(err); }
+          res.redirect('/');
+        });
+      });
+    }).catch((error) => {
+      console.error('Error revoking Google token:', error);
+      // Still proceed with local logout even if token revocation fails
+      req.logout((err) => {
+        if (err) { return next(err); }
+        req.session.destroy((err) => {
+          if (err) { return next(err); }
+          res.redirect('/');
+        });
+      });
+    });
+  } else {
+    // If no access token, just proceed with local logout
+    req.logout((err) => {
+      if (err) { return next(err); }
+      req.session.destroy((err) => {
+        if (err) { return next(err); }
+        res.redirect('/');
+      });
+    });
+  }
+});
+
+// Middleware to check if user is authenticated
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    // Check if the authenticated user's email is in the authorized list
+    const userEmail = req.user.emails && req.user.emails.length > 0 ? req.user.emails[0].value : null;
+    if (userEmail && AUTHORIZED_GOOGLE_EMAILS.includes(userEmail)) {
+      return next(); // User is authenticated AND authorized
+    } else {
+      // User is authenticated but NOT authorized
+      return res.status(403).json({ success: false, error: 'Forbidden. You are authenticated but not authorized to access this application.' });
+    }
+  }
+  // User is not authenticated
+  res.status(401).json({ success: false, error: 'Unauthorized. Please log in.' });
+}
+
 // --- API Routes ---
 const apiRouter = express.Router();
-apiRouter.get('/mappings', async (req, res) => {
+apiRouter.get('/mappings', isAuthenticated, async (req, res) => {
 	const forceRefresh = req.query.force === 'true';
 	if (!forceRefresh && fs.existsSync(csvPath)) {
 		const csvContent = fs.readFileSync(csvPath, 'utf8');
@@ -120,8 +223,9 @@ apiRouter.get('/mappings', async (req, res) => {
 		res.status(500).json({ success: false, error: error.message });
 	}
 });
-apiRouter.post('/mappings', async (req, res) => {
+apiRouter.post('/mappings', isAuthenticated, async (req, res) => {
 	const { shortCode, longUrl, utm_source, utm_medium, utm_campaign } = req.body;
+
 	if (!shortCode || !longUrl) {
 		return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
 	}
@@ -151,7 +255,7 @@ apiRouter.post('/mappings', async (req, res) => {
 		res.status(500).json({ success: false, error: `Failed to create short URL: ${error.message}` });
 	}
 });
-apiRouter.put('/mappings/:shortCode', async (req, res) => {
+apiRouter.put('/mappings/:shortCode', isAuthenticated, async (req, res) => {
 	const { shortCode } = req.params;
 	const { longUrl, utm_source, utm_medium, utm_campaign } = req.body;
 	if (!shortCode || !longUrl) {
@@ -184,7 +288,7 @@ apiRouter.put('/mappings/:shortCode', async (req, res) => {
 	}
 });
 
-apiRouter.delete('/mappings/:shortCode', async (req, res) => {
+apiRouter.delete('/mappings/:shortCode', isAuthenticated, async (req, res) => {
 	const { shortCode } = req.params;
 	if (!shortCode) return res.status(400).json({ success: false, error: 'Short code is required.' });
 	try {
@@ -232,9 +336,26 @@ apiRouter.get('/validate-url', async (req, res) => {
 	}
 });
 
+// New API endpoint to get user information
+app.get('/api/user', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ user: { id: req.user.id, displayName: req.user.displayName } });
+  } else {
+    res.json({ user: null });
+  }
+});
+
 app.use('/api', apiRouter);
 
 // --- Frontend Serving ---
+// Protect the root path, redirecting to login if not authenticated
+app.get('/', (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/auth/google');
+  }
+  next(); // Continue to serve the static files if authenticated
+});
+
 app.use(express.static(clientBuildPath));
 
 // --- Final Fallback Middleware (replaces the problematic app.get('*')) ---
