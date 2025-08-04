@@ -15,7 +15,7 @@ A high-performance URL shortener implemented using Cloudflare Workers and Cloudf
 
 You can manage your short links using the provided Web UI:
 
-**Web UI (Recommended):** A user-friendly, local web interface for creating, deleting, and viewing links, complete with QR code generation. The Web UI now features a server-based architecture to securely handle Cloudflare API requests. See the [Web UI README](./web-ui/README.md) for setup instructions.
+**Web UI (Recommended):** A user-friendly, local web interface for creating, deleting, and viewing links, complete with QR code generation. The Web UI now features a server-based architecture to securely handle Cloudflare API requests and requires Google authentication for access. Access is restricted to a predefined list of authorized Google email addresses. See the [Web UI README](./web-ui/README.md) for setup instructions.
 
 The Web UI has been improved to provide more consistent and user-friendly feedback, including clearer error messages, client-side validation, and notifications for all operations.
 

@@ -4,6 +4,8 @@ This directory contains a local-only web application that provides a graphical u
 
 ## Features
 
+- **Authentication with Google OAuth 2.0:** Securely log in using your Google account.
+- **Authorization by Email:** Access to the application's features is restricted to a predefined list of authorized Google email addresses.
 - **Full CRUD Operations:** Create, read, update, and delete short links.
 - **QR Code Generation:** Instantly generate a QR code for any short link.
 - **Configurable Hostname:** Set your short link domain directly in the UI (persisted in browser storage).
@@ -35,6 +37,16 @@ Before running the application, you need to create two `.env` files.
     CLOUDFLARE_API_TOKEN=your_cloudflare_api_token
     CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
     CLOUDFLARE_KV_NAMESPACE_ID=your_kv_namespace_id
+
+    # Google OAuth Credentials
+    GOOGLE_CLIENT_ID=your_google_client_id
+    GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+    # Session Secret (Generate a strong, random string for this)
+    SESSION_SECRET=your_random_session_secret_string
+
+    # Comma-separated list of Google email addresses authorized to use the app
+    AUTHORIZED_GOOGLE_EMAILS=admin@example.com,another.admin@example.com
     ```
 
 2.  **Client Configuration (`web-ui/client/.env`):**
@@ -105,17 +117,20 @@ The server will now handle everything. You can access the application by opening
 
 - Node.js 18.0.0 or higher
 - A Cloudflare API token with permissions to edit the KV namespace.
+- A Google Cloud Project configured for OAuth 2.0 (see Google's documentation for details).
 
 ## Security Considerations
 
-- This Web UI is designed for **local, authenticated use only**. It uses a Cloudflare API token to interact with your account.
-- **Do NOT expose this server to the public internet.** It does not have authentication mechanisms suitable for public access.
-- **Protect your `.env` file and the Cloudflare API token.** Do not commit them to version control.
+- This Web UI is designed for **local, authenticated use only**. It uses a Cloudflare API token and Google OAuth credentials to interact with your accounts.
+- **Do NOT expose this server to the public internet.** It does not have authentication mechanisms suitable for public access beyond the configured authorized email addresses.
+- **Protect your `.env` file and all sensitive credentials (Cloudflare API token, Google Client Secret, Session Secret).** Do not commit them to version control.
 
 ## Troubleshooting
 
 - **"Cannot find module 'express'" or similar:** Run `npm install` in both `web-ui/` and `web-ui/client/` directories.
 - **"Cloudflare API error":** Check your Cloudflare API token, account ID, and KV namespace ID in the `web-ui/.env` file. Ensure the token has the correct permissions.
+- **"Google OAuth Error" or redirect issues:** Verify your `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `callbackURL` in `web-ui/server.js` and your Google Cloud Project settings. Ensure authorized redirect URIs are correctly configured in Google Cloud.
+- **"Forbidden" error after logging in:** Your Google email address is likely not in the `AUTHORIZED_GOOGLE_EMAILS` list in `web-ui/.env`. Add your email to this list.
 - **"CSV file not found" warning:** This is normal on first run - the CSV file will be created automatically
 - **Frontend not loading:** Verify both the API server and the React client are running (in development mode). In production mode, ensure the client has been built (`npm run build`) and the server is running.
 - **CORS errors:** Ensure `VITE_API_BASE_URL` in `web-ui/client/.env` matches the `PORT` in `web-ui/.env` and the server's actual running port.
