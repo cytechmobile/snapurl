@@ -31,51 +31,30 @@ This section covers the one-time setup for the Cloudflare Worker that powers the
 
 ### Installation & Configuration
 
-1.  **Install Wrangler CLI:**
+1.  **Create KV Namespace:**
+    *   Log in to your Cloudflare dashboard.
+    *   Go to **Workers & Pages** > **KV**.
+    *   Click "Create a namespace" and give it a name (e.g., `SNAPURL_KV`). Note down its ID.
 
-    ```bash
-    npm install -g wrangler
-    ```
-
-2.  **Log in to Cloudflare:**
-
-    ```bash
-    wrangler login
-    ```
-
-3.  **Configure `wrangler.jsonc`:**
-    Open `wrangler.jsonc` and fill in your `account_id`. Then, create a KV namespace for your links by running:
-
-    ```bash
-    # This creates the production namespace
-    wrangler kv:namespace create "SNAPURL_KV"
-
-    # This creates a preview namespace for testing
-    wrangler kv:namespace create "SNAPURL_KV" --preview
-    ```
-
-    Wrangler will output the `id` and `preview_id` for your new namespaces. **Copy these IDs** and paste them into the `kv_namespaces` section of your `wrangler.jsonc` file.
-
-4.  **Add Root Redirect URL:**
-    In `wrangler.jsonc`, add a `vars` section to specify where requests to the root of your shortener domain should redirect:
-
-    ```json
-    "vars": {
-      "ROOT_REDIRECT_URL": "https://your-main-website.com"
-    }
-    ```
-
-5.  **(Optional) Configure Analytics Secrets:**
-    If you plan to use Google Analytics, store your credentials as encrypted secrets:
-    ```bash
-    wrangler secret put GOOGLE_ANALYTICS_MEASUREMENT_ID
-    wrangler secret put GOOGLE_ANALYTICS_API_SECRET
-    ```
+2.  **Configure Worker Settings:**
+    *   Go to **Workers & Pages** > Select your Worker.
+    *   Navigate to **Settings > Variables**.
+    *   **KV Namespace Binding:** Under "KV Namespace Bindings", add a new binding:
+        *   Variable name: `SNAPURL_KV`
+        *   KV namespace: Select the namespace you created in step 1.
+    *   **Root Redirect URL:** Under "Environment Variables", add a new variable:
+        *   Variable name: `ROOT_REDIRECT_URL`
+        *   Value: `https://your-main-website.com` (or your desired root redirect URL)
+    *   **(Optional) Configure Analytics Secrets:** Under "Secrets", add the following secrets if you plan to use Google Analytics:
+        *   Secret name: `GOOGLE_ANALYTICS_MEASUREMENT_ID`
+        *   Secret name: `GOOGLE_ANALYTICS_API_SECRET`
 
 ### Deployment
 
 1.  **Deploy the Worker:**
-    Deploy your Cloudflare Worker using your preferred method (e.g., `wrangler deploy` if you still use Wrangler for deployment, or through the Cloudflare dashboard).
+    *   Go to **Workers & Pages** > Select your Worker.
+    *   Navigate to **Overview**.
+    *   Click "Quick Edit" or "Deploy" to paste your Worker code (from `src/index.js`) directly into the editor, or upload it.
 
 2.  **Set up a Custom Domain:**
     For a professional look, use your own short domain (e.g., `s.yourdomain.com`):
