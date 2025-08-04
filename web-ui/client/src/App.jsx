@@ -262,8 +262,8 @@ function App() {
 						mappings={paginatedMappings}
 						onDelete={handleDelete}
 						onEdit={handleShowEditModal}
-						onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost}/${shortCode}`)}
-						onCopyToClipboard={(shortCode) => handleCopyToClipboard(`${shortUrlHost}/${shortCode}`)}
+						onShowQrCode={(shortCode) => setQrCodeValue(`${shortUrlHost.replace(/\/$/, '')}/${shortCode}`)}
+						onCopyToClipboard={(shortCode) => handleCopyToClipboard(`${shortUrlHost.replace(/\/$/, '')}/${shortCode}`)}
 						page={page}
 						rowsPerPage={rowsPerPage}
 						totalMappings={filteredAndSortedMappings.length}
