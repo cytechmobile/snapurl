@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { nanoid } from 'nanoid';
 import { QRCodeCanvas } from 'qrcode.react';
 import {
 	Container,
@@ -18,14 +17,13 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from
 import { AppBar, Toolbar as MuiToolbar } from '@mui/material'; // Renamed Toolbar to MuiToolbar to avoid conflict
 import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward, ContentCopy, Login, Logout } from '@mui/icons-material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Grid } from '@mui/material';
+import { useMappings } from './hooks/useMappings';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 const WORKER_URL_FALLBACK = import.meta.env.VITE_WORKER_URL || 'https://your-worker.workers.dev';
 
 function App() {
-	const [mappings, setMappings] = useState([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState(null);
+	const { mappings, isLoading, error, fetchMappings, createMapping, updateMapping, deleteMapping } = useMappings();
 	const [searchTerm, setSearchTerm] = useState('');
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -60,41 +58,6 @@ function App() {
 		checkLoginStatus();
 	}, []);
 
-	const fetchMappings = async (force = false) => {
-		setIsLoading(true);
-		setError(null);
-		try {
-			const url = force ? `${API_BASE_URL}/mappings?force=true` : `${API_BASE_URL}/mappings`;
-			const response = await fetch(url);
-			if (!response.ok) {
-				throw new Error(`Server error: ${response.statusText}`);
-			}
-			const result = await response.json();
-			if (result.success) {
-				// Ensure mappings have all expected fields
-				const sanitizedMappings = result.data.map((m) => ({
-					shortCode: m.shortCode || '',
-					longUrl: m.longUrl || '',
-					utm_source: m.utm_source || '',
-					utm_medium: m.utm_medium || '',
-					utm_campaign: m.utm_campaign || '',
-				}));
-				setMappings(sanitizedMappings);
-			} else {
-				throw new Error(result.error || 'Failed to fetch mappings.');
-			}
-		} catch (err) {
-			setError(err.message);
-			setMappings([]);
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		fetchMappings(false);
-	}, []);
-
 	const handleShowCreateModal = () => {
 		setEditingMapping({}); // Open modal with empty object for creation
 	};
@@ -108,86 +71,38 @@ function App() {
 	};
 
 	const handleCreate = async (formData) => {
-		const shortCode = formData.customShortCode || nanoid(6);
-		const newMapping = { ...formData, shortCode };
-
-		// Optimistic UI update
-		setMappings((prev) => [...prev, newMapping]);
-		handleModalClose();
-
-		try {
-			const response = await fetch(`${API_BASE_URL}/mappings`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(newMapping),
-			});
-
-			if (!response.ok) {
-				const result = await response.json();
-				throw new Error(result.error || 'Failed to create mapping.');
-			}
+		const { success, error } = await createMapping(formData);
+		if (success) {
 			setSnackbarMessage('Short URL created successfully!');
 			setSnackbarOpen(true);
-		} catch (err) {
-			setError(err.message);
-			setSnackbarMessage(`Error creating short URL: ${err.message}`);
+		} else {
+			setSnackbarMessage(`Error creating short URL: ${error}`);
 			setSnackbarOpen(true);
-			// Revert the optimistic update on error
-			setMappings((prev) => prev.filter((m) => m.shortCode !== shortCode));
 		}
+		handleModalClose();
 	};
 
 	const handleUpdate = async (formData) => {
-		const { shortCode } = formData;
-		const originalMappings = mappings;
-
-		// Optimistic UI update
-		setMappings((prev) => prev.map((m) => (m.shortCode === shortCode ? formData : m)));
-		handleModalClose();
-
-		try {
-			const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(formData),
-			});
-
-			if (!response.ok) {
-				const result = await response.json();
-				throw new Error(result.error || 'Failed to update mapping.');
-			}
+		const { success, error } = await updateMapping(formData);
+		if (success) {
 			setSnackbarMessage('Short URL updated successfully!');
 			setSnackbarOpen(true);
-		} catch (err) {
-			setError(err.message);
-			setSnackbarMessage(`Error updating short URL: ${err.message}`);
+		} else {
+			setSnackbarMessage(`Error updating short URL: ${error}`);
 			setSnackbarOpen(true);
-			// Revert the optimistic update on error
-			setMappings(originalMappings);
 		}
+		handleModalClose();
 	};
 
 	const handleDelete = async (shortCode) => {
 		if (window.confirm(`Are you sure you want to delete the short URL "${shortCode}"?`)) {
-			const originalMappings = mappings;
-			// Optimistic UI update
-			setMappings((prev) => prev.filter((m) => m.shortCode !== shortCode));
-
-			try {
-				const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, { method: 'DELETE' });
-
-				if (!response.ok) {
-					const result = await response.json();
-					throw new Error(result.error || 'Failed to delete mapping.');
-				}
+			const { success, error } = await deleteMapping(shortCode);
+			if (success) {
 				setSnackbarMessage('Short URL deleted successfully!');
 				setSnackbarOpen(true);
-			} catch (err) {
-				setError(err.message);
-				setSnackbarMessage(`Error deleting short URL: ${err.message}`);
+			} else {
+				setSnackbarMessage(`Error deleting short URL: ${error}`);
 				setSnackbarOpen(true);
-				// Revert the optimistic update on error
-				setMappings(originalMappings);
 			}
 		}
 	};
