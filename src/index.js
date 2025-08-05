@@ -67,11 +67,11 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl, utmParams = 
 	const hashArray = Array.from(new Uint8Array(hashBuffer));
 	const clientId = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
-	const gaPayload = {
+	tconst gaPayload = {
 		client_id: clientId,
 		events: [
 			{
-				name: 'short_link_access',
+				name: 'page_view',
 				params: {
 					page_location: request.url,
 					page_referrer: request.headers.get('Referer') || 'none',
