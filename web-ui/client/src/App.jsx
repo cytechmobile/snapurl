@@ -12,12 +12,14 @@ import {
 	Alert,
 	TablePagination,
 	Snackbar,
+	Chip, // Import Chip
 } from '@mui/material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { AppBar, Toolbar as MuiToolbar } from '@mui/material'; // Renamed Toolbar to MuiToolbar to avoid conflict
 import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward, ContentCopy, Login, Logout } from '@mui/icons-material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Grid } from '@mui/material';
 import { useMappings } from './hooks/useMappings';
+import LinkModal from './LinkModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 const WORKER_URL_FALLBACK = import.meta.env.VITE_WORKER_URL || 'https://your-worker.workers.dev';
@@ -25,6 +27,7 @@ const WORKER_URL_FALLBACK = import.meta.env.VITE_WORKER_URL || 'https://your-wor
 function App() {
 	const { mappings, isLoading, error, fetchMappings, createMapping, updateMapping, deleteMapping } = useMappings();
 	const [searchTerm, setSearchTerm] = useState('');
+	const [clickedTagFilter, setClickedTagFilter] = useState(''); // New state for clicked tag filter
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
 	const [sortColumn, setSortColumn] = useState('shortCode');
@@ -128,11 +131,21 @@ function App() {
 		setSnackbarOpen(false);
 	};
 
+	const handleTagChipClick = (tag) => {
+		setSearchTerm(tag); // Set the search term to the clicked tag
+		setClickedTagFilter(tag); // Store the clicked tag for filtering
+		setPage(0); // Reset pagination
+	};
+
 	const filteredAndSortedMappings = useMemo(() => {
+		const currentFilterTerm = clickedTagFilter || searchTerm;
+		const lowerCaseFilterTerm = currentFilterTerm.toLowerCase();
+
 		const filtered = mappings.filter(
 			(m) =>
-				m.shortCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				(m.longUrl && m.longUrl.toLowerCase().includes(searchTerm.toLowerCase()))
+				(m.shortCode.toLowerCase().includes(lowerCaseFilterTerm) ||
+				(m.longUrl && m.longUrl.toLowerCase().includes(lowerCaseFilterTerm)) ||
+				(m.tags && m.tags.some(tag => tag.toLowerCase().includes(lowerCaseFilterTerm))))
 		);
 
 		if (sortColumn) {
@@ -145,7 +158,7 @@ function App() {
 			});
 		}
 		return filtered;
-	}, [mappings, searchTerm, sortColumn, sortDirection]);
+	}, [mappings, searchTerm, clickedTagFilter, sortColumn, sortDirection]);
 
 	const paginatedMappings = useMemo(() => {
 		const startIndex = page * rowsPerPage;
@@ -182,6 +195,7 @@ function App() {
 					searchTerm={searchTerm}
 					onSearchTermChange={(e) => {
 						setSearchTerm(e.target.value);
+						setClickedTagFilter(''); // Clear clickedTagFilter when user types
 						setPage(0);
 					}}
 				/>
@@ -206,6 +220,7 @@ function App() {
 						sortColumn={sortColumn}
 						sortDirection={sortDirection}
 						onSort={handleSort}
+						onTagChipClick={handleTagChipClick}
 					/>
 				)}
 			</Box>
@@ -309,6 +324,7 @@ const MappingTable = ({
 	totalMappings,
 	onPageChange,
 	onRowsPerPageChange,
+	onTagChipClick,
 }) => {
 	if (mappings.length === 0) {
 		return (
@@ -327,12 +343,17 @@ const MappingTable = ({
 							{sortColumn === 'shortCode' &&
 								(sortDirection === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />)}
 						</TableCell>
-						<TableCell onClick={() => onSort('longUrl')} sx={{ cursor: 'pointer', width: '60%' }}>
+						<TableCell onClick={() => onSort('longUrl')} sx={{ cursor: 'pointer', width: '50%' }}>
 							Long URL{' '}
 							{sortColumn === 'longUrl' &&
 								(sortDirection === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />)}
 						</TableCell>
-						<TableCell align="right" sx={{ width: '25%' }}>
+						<TableCell onClick={() => onSort('tags')} sx={{ cursor: 'pointer', width: '15%' }}>
+							Tags{' '}
+							{sortColumn === 'tags' &&
+								(sortDirection === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />)}
+						</TableCell>
+						<TableCell align="right" sx={{ width: '20%' }}>
 							Actions
 						</TableCell>
 					</TableRow>
@@ -347,6 +368,11 @@ const MappingTable = ({
 								<a href={mapping.longUrl} target="_blank" rel="noopener noreferrer">
 									{mapping.longUrl}
 								</a>
+							</TableCell>
+							<TableCell>
+								<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+									{mapping.tags && mapping.tags.map((tag) => <Chip key={tag} label={tag} size="small" onClick={() => onTagChipClick(tag)} sx={{ cursor: 'pointer' }} />)}
+								</Box>
 							</TableCell>
 							<TableCell align="right">
 								<IconButton onClick={() => onCopyToClipboard(mapping.shortCode)} color="primary" aria-label="copy short url">
@@ -379,224 +405,7 @@ const MappingTable = ({
 	);
 };
 
-const LinkModal = ({ initialData, onClose, onSave, existingShortCodes }) => {
-	const [formData, setFormData] = useState({
-		longUrl: '',
-		customShortCode: '',
-		utm_source: '',
-		utm_medium: '',
-		utm_campaign: '',
-		...initialData,
-	});
-	const [modalError, setModalError] = useState('');
-	const [longUrlInputError, setLongUrlInputError] = useState('');
-	const [customShortCodeInputError, setCustomShortCodeInputError] = useState('');
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [urlValidationStatus, setUrlValidationStatus] = useState(null); // null, 'valid', 'invalid', 'checking'
-	const [urlValidationMessage, setUrlValidationMessage] = useState('');
-	const isEditMode = !!initialData.shortCode;
 
-	// Debounce utility
-	const debounce = (func, delay) => {
-		let timeout;
-		return function (...args) {
-			const context = this;
-			clearTimeout(timeout);
-			timeout = setTimeout(() => func.apply(context, args), delay);
-		};
-	};
-
-	const validateLongUrl = useMemo(
-		() =>
-			debounce(async (url) => {
-				if (!url) {
-					setUrlValidationStatus(null);
-					setUrlValidationMessage('');
-					return;
-				}
-
-				setUrlValidationStatus('checking');
-				setUrlValidationMessage('Checking URL...');
-
-				try {
-					const response = await fetch(`${API_BASE_URL}/validate-url?url=${encodeURIComponent(url)}`);
-					const result = await response.json();
-
-					if (result.isValid) {
-						setUrlValidationStatus('valid');
-						setUrlValidationMessage('URL is reachable.');
-					} else {
-						setUrlValidationStatus('invalid');
-						setUrlValidationMessage(result.message || 'URL is not reachable.');
-					}
-				} catch (err) {
-					setUrlValidationStatus('invalid');
-					setUrlValidationMessage('Error checking URL. Please try again.');
-					console.error('URL validation API error:', err);
-				}
-			}, 500),
-		[]
-	);
-
-	useEffect(() => {
-		validateLongUrl(formData.longUrl);
-	}, [formData.longUrl, validateLongUrl]);
-
-	const handleChange = (e) => {
-		const { id, value } = e.target;
-		setFormData((prev) => ({ ...prev, [id]: value }));
-		// Clear specific input errors when user types
-		if (id === 'longUrl') {
-			setLongUrlInputError('');
-		} else if (id === 'customShortCode') {
-			setCustomShortCodeInputError('');
-		}
-		setModalError(''); // Clear general modal error on any change
-	};
-
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setModalError('');
-		setLongUrlInputError('');
-		setCustomShortCodeInputError('');
-
-		let hasError = false;
-
-		// --- Client-side validation (basic format check) ---
-		if (!formData.longUrl) {
-			setLongUrlInputError('Long URL cannot be empty.');
-			hasError = true;
-		} else {
-			const urlRegex =
-				/^(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})$/i;
-			if (!urlRegex.test(formData.longUrl)) {
-				setLongUrlInputError('Please enter a valid URL (e.g., https://example.com or http://example.com).');
-				hasError = true;
-			}
-		}
-
-		if (formData.customShortCode) {
-			if (!/^[a-zA-Z0-9_-]+$/.test(formData.customShortCode)) {
-				setCustomShortCodeInputError('Short code can only contain letters, numbers, hyphens, and underscores.');
-				hasError = true;
-			} else if (!isEditMode && existingShortCodes.includes(formData.customShortCode)) {
-				setCustomShortCodeInputError('This short code already exists.');
-				hasError = true;
-			}
-		}
-
-		// --- Server-side URL reachability check ---
-		if (urlValidationStatus !== 'valid') {
-			setModalError(urlValidationMessage || 'Please ensure the long URL is valid and reachable.');
-			hasError = true;
-		}
-
-		if (hasError) {
-			return;
-		}
-
-		setIsSubmitting(true);
-		try {
-			await onSave(formData);
-			// No need to call onClose here, as the parent component will handle it.
-		} catch (err) {
-			setModalError(err.message);
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
-
-	return (
-		<Dialog open onClose={onClose} fullWidth maxWidth="md">
-			<DialogTitle>{isEditMode ? 'Edit Short URL' : 'Create New Short URL'}</DialogTitle>
-			<DialogContent dividers sx={{ p: 3, boxShadow: 1 }}>
-				{modalError && (
-					<Alert severity="error" sx={{ mb: 2 }}>
-						{modalError}
-					</Alert>
-				)}
-				<form onSubmit={handleSubmit}>
-					<fieldset disabled={isSubmitting}>
-						<TextField
-							margin="normal"
-							required
-							fullWidth
-							id="longUrl"
-							label="Long URL"
-							name="longUrl"
-							autoFocus
-							value={formData.longUrl}
-							onChange={handleChange}
-							placeholder="https://example.com/my-very-long-url"
-							type="url"
-							error={urlValidationStatus === 'invalid' || !!longUrlInputError}
-							helperText={urlValidationMessage || longUrlInputError}
-						/>
-						<TextField
-							margin="normal"
-							fullWidth
-							id="customShortCode"
-							label={isEditMode ? 'Short Code' : 'Custom Short Code (Optional)'}
-							name="customShortCode"
-							value={isEditMode ? initialData.shortCode : formData.customShortCode}
-							onChange={handleChange}
-							placeholder={isEditMode ? '' : 'my-custom-code (or leave blank)'}
-							disabled={isEditMode}
-							error={!!customShortCodeInputError}
-							helperText={customShortCodeInputError}
-						/>
-						<Typography variant="h6" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>
-							UTM Parameters (Optional)
-						</Typography>
-						<Grid container spacing={2}>
-							<Grid item xs={12} sm={4}>
-								<TextField
-									fullWidth
-									id="utm_source"
-									label="UTM Source"
-									name="utm_source"
-									value={formData.utm_source}
-									onChange={handleChange}
-									placeholder="e.g., google"
-								/>
-							</Grid>
-							<Grid item xs={12} sm={4}>
-								<TextField
-									fullWidth
-									id="utm_medium"
-									label="UTM Medium"
-									name="utm_medium"
-									value={formData.utm_medium}
-									onChange={handleChange}
-									placeholder="e.g., cpc"
-								/>
-							</Grid>
-							<Grid item xs={12} sm={4}>
-								<TextField
-									fullWidth
-									id="utm_campaign"
-									label="UTM Campaign"
-									name="utm_campaign"
-									value={formData.utm_campaign}
-									onChange={handleChange}
-									placeholder="e.g., summer_sale"
-								/>
-							</Grid>
-						</Grid>
-					</fieldset>
-				</form>
-			</DialogContent>
-			<DialogActions>
-				<Button onClick={onClose} disabled={isSubmitting}>
-					Cancel
-				</Button>
-				<Button onClick={handleSubmit} variant="contained" disabled={isSubmitting || urlValidationStatus !== 'valid'}>
-					{isSubmitting ? <CircularProgress size={24} /> : isEditMode ? 'Save Changes' : 'Create'}
-				</Button>
-			</DialogActions>
-		</Dialog>
-	);
-};
 
 const QrCodeModal = ({ url, onClose }) => (
 	<Dialog open onClose={onClose}>

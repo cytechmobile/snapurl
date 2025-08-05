@@ -53,37 +53,43 @@ const fetchFromKVAndCache = async () => {
 	for (const key of keysResult) {
 		const getValueEndpoint = `/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${CLOUDFLARE_KV_NAMESPACE_ID}/values/${key.name}`;
 		const value = await makeCloudflareApiCall('GET', getValueEndpoint);
+		console.log(`fetchFromKVAndCache: Raw value for ${key.name}: ${value}`);
 		try {
 			const parsedValue = JSON.parse(value);
+			console.log(`fetchFromKVAndCache: Parsed value for ${key.name}:`, parsedValue);
 			mappings.push({
 				shortCode: key.name,
 				longUrl: parsedValue.longUrl,
 				utm_source: parsedValue.utm_source,
 				utm_medium: parsedValue.utm_medium,
 				utm_campaign: parsedValue.utm_campaign,
+				tags: parsedValue.tags || [],
 			});
 		} catch {
-			mappings.push({ shortCode: key.name, longUrl: value.trim() });
+			mappings.push({ shortCode: key.name, longUrl: value.trim(), tags: [] });
 		}
 	}
 	const csvContent = [
-		'Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign',
+		'Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign,Tags',
 		...mappings.map((m) => {
 			const longUrl = m.longUrl.replace(/"/g, '""'); // Escape double quotes
-			return `"${m.shortCode}","${longUrl}","${m.utm_source || ''}","${m.utm_medium || ''}","${m.utm_campaign || ''}"`;
+			const tags = m.tags ? m.tags.join('|').replace(/"/g, '""') : ''; // Join tags with | and escape double quotes
+			return `"${m.shortCode}","${longUrl}","${m.utm_source || ''}","${m.utm_medium || ''}","${m.utm_campaign || ''}","${tags}"`;
 		}),
 	];
 	fs.writeFileSync(csvPath, csvContent.join('\n'));
 	return mappings;
 };
 
-const createMapping = async (shortCode, longUrl, utm_source, utm_medium, utm_campaign) => {
+const createMapping = async (shortCode, longUrl, utm_source, utm_medium, utm_campaign, tags) => {
     const value = JSON.stringify({
         longUrl,
         utm_source: utm_source || '',
         utm_medium: utm_medium || '',
         utm_campaign: utm_campaign || '',
+        tags: tags || [],
     });
+    console.log(`createMapping: Sending to KV for ${shortCode}: ${value}`);
 
     await makeCloudflareApiCall(
         'PUT',
@@ -92,13 +98,15 @@ const createMapping = async (shortCode, longUrl, utm_source, utm_medium, utm_cam
     );
 };
 
-const updateMapping = async (shortCode, longUrl, utm_source, utm_medium, utm_campaign) => {
+const updateMapping = async (shortCode, longUrl, utm_source, utm_medium, utm_campaign, tags) => {
     const value = JSON.stringify({
         longUrl,
         utm_source: utm_source || '',
         utm_medium: utm_medium || '',
         utm_campaign: utm_campaign || '',
+        tags: tags || [],
     });
+    console.log(`updateMapping: Sending to KV for ${shortCode}: ${value}`);
 
     await makeCloudflareApiCall(
         'PUT',

@@ -25,6 +25,7 @@ export function useMappings() {
                     utm_source: m.utm_source || '',
                     utm_medium: m.utm_medium || '',
                     utm_campaign: m.utm_campaign || '',
+                    tags: m.tags || [],
                 }));
                 setMappings(sanitizedMappings);
             } else {
@@ -52,7 +53,14 @@ export function useMappings() {
             const response = await fetch(`${API_BASE_URL}/mappings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newMapping),
+                body: JSON.stringify({
+                    shortCode: newMapping.shortCode,
+                    longUrl: newMapping.longUrl,
+                    utm_source: newMapping.utm_source,
+                    utm_medium: newMapping.utm_medium,
+                    utm_campaign: newMapping.utm_campaign,
+                    tags: newMapping.tags,
+                }),
             });
 
             if (!response.ok) {
@@ -76,7 +84,13 @@ export function useMappings() {
             const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    longUrl: formData.longUrl,
+                    utm_source: formData.utm_source,
+                    utm_medium: formData.utm_medium,
+                    utm_campaign: formData.utm_campaign,
+                    tags: formData.tags,
+                }),
             });
 
             if (!response.ok) {

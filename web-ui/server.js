@@ -137,10 +137,10 @@ apiRouter.get('/mappings', isAuthenticated, async (req, res) => {
 		const lines = csvContent.split('\n').slice(1);
 		const mappings = lines
 			.map((line) => {
-				const [shortCode, longUrl, utm_source, utm_medium, utm_campaign] = line
+				const [shortCode, longUrl, utm_source, utm_medium, utm_campaign, tags] = line
 					.split(',')
 					.map((s) => s.replace(/^"|"$/g, '').replace(/""/g, '"'));
-				return { shortCode, longUrl, utm_source, utm_medium, utm_campaign };
+				return { shortCode, longUrl, utm_source, utm_medium, utm_campaign, tags: tags ? tags.split('|') : [] };
 			})
 			.filter((m) => m.shortCode && m.longUrl);
 		return res.json({ success: true, data: mappings });
@@ -153,7 +153,7 @@ apiRouter.get('/mappings', isAuthenticated, async (req, res) => {
 	}
 });
 apiRouter.post('/mappings', isAuthenticated, async (req, res) => {
-	const { shortCode, longUrl, utm_source, utm_medium, utm_campaign } = req.body;
+	const { shortCode, longUrl, utm_source, utm_medium, utm_campaign, tags } = req.body;
 
 	if (!shortCode || !longUrl) {
 		return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
@@ -165,7 +165,7 @@ apiRouter.post('/mappings', isAuthenticated, async (req, res) => {
 	}
 
 	try {
-		await createMapping(shortCode, longUrl, utm_source, utm_medium, utm_campaign );
+		await createMapping(shortCode, longUrl, utm_source, utm_medium, utm_campaign, tags );
 		await fetchFromKVAndCache(); // Update CSV cache
 		res.status(201).json({ success: true, data: { shortCode, longUrl } });
 	} catch (error) {
@@ -174,7 +174,7 @@ apiRouter.post('/mappings', isAuthenticated, async (req, res) => {
 });
 apiRouter.put('/mappings/:shortCode', isAuthenticated, async (req, res) => {
 	const { shortCode } = req.params;
-	const { longUrl, utm_source, utm_medium, utm_campaign } = req.body;
+	const { longUrl, utm_source, utm_medium, utm_campaign, tags } = req.body;
 	if (!shortCode || !longUrl) {
 		return res.status(400).json({ success: false, error: 'Short code and long URL are required.' });
 	}
@@ -185,7 +185,7 @@ apiRouter.put('/mappings/:shortCode', isAuthenticated, async (req, res) => {
 	}
 
 	try {
-		await updateMapping(shortCode, longUrl, utm_source, utm_medium, utm_campaign );
+		await updateMapping(shortCode, longUrl, utm_source, utm_medium, utm_campaign, tags );
 		await fetchFromKVAndCache(); // Update CSV cache
 		res.json({ success: true, data: { shortCode, longUrl } });
 	} catch (error) {
