@@ -11,26 +11,31 @@ import {
 	DialogActions,
 	Grid,
 	Typography,
+	Chip, // Import Chip
+	Box, // Import Box for flex container
 } from '@mui/material';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 const LinkModal = ({ initialData = {}, onClose, onSave, existingShortCodes, testUrlValidationStatus }) => {
+	const isEditMode = !!initialData.shortCode;
+
 	const [formData, setFormData] = useState({
-		longUrl: '',
-		customShortCode: '',
-		utm_source: '',
-		utm_medium: '',
-		utm_campaign: '',
-		...initialData,
+		longUrl: initialData.longUrl || '',
+		customShortCode: initialData.shortCode || '',
+		utm_source: initialData.utm_source || '',
+		utm_medium: initialData.utm_medium || '',
+		utm_campaign: initialData.utm_campaign || '',
+		tags: initialData.tags || [], // Tags are now an array
+		...(isEditMode && { shortCode: initialData.shortCode }), // Include shortCode only in edit mode
 	});
+	const [tagInput, setTagInput] = useState(''); // State for the new tag input field
 	const [modalError, setModalError] = useState('');
 	const [longUrlInputError, setLongUrlInputError] = useState('');
 	const [customShortCodeInputError, setCustomShortCodeInputError] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [urlValidationStatus, setUrlValidationStatus] = useState(testUrlValidationStatus || null); // null, 'valid', 'invalid', 'checking'
 	const [urlValidationMessage, setUrlValidationMessage] = useState('');
-	const isEditMode = !!initialData.shortCode;
 
 	// Debounce utility
 	const debounce = (func, delay) => {
@@ -88,6 +93,24 @@ const LinkModal = ({ initialData = {}, onClose, onSave, existingShortCodes, test
 			setCustomShortCodeInputError('');
 		}
 		setModalError(''); // Clear general modal error on any change
+	};
+
+	const handleAddTag = (event) => {
+		if (event.key === 'Enter' || event.key === ',' || event.key === 'Tab') {
+			event.preventDefault(); // Prevent form submission
+			const newTag = tagInput.trim();
+			if (newTag && !formData.tags.includes(newTag)) {
+				setFormData((prev) => ({ ...prev, tags: [...prev.tags, newTag] }));
+				setTagInput('');
+			}
+		}
+	};
+
+	const handleDeleteTag = (tagToDelete) => {
+		setFormData((prev) => ({
+			...prev,
+			tags: prev.tags.filter((tag) => tag !== tagToDelete),
+		}));
 	};
 
 	const handleSubmit = async (e) => {
@@ -219,6 +242,25 @@ const LinkModal = ({ initialData = {}, onClose, onSave, existingShortCodes, test
 								/>
 							</Grid>
 						</Grid>
+						<Typography variant="h6" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>
+							Tags
+						</Typography>
+						<TextField
+							fullWidth
+							id="tagInput"
+							label="Add Tags"
+							name="tagInput"
+							value={tagInput}
+							onChange={(e) => setTagInput(e.target.value)}
+							onKeyDown={handleAddTag}
+							placeholder="Type tag and press Enter or comma"
+							margin="normal"
+						/>
+						<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+							{formData.tags.map((tag) => (
+								<Chip key={tag} label={tag} onDelete={() => handleDeleteTag(tag)} />
+							))}
+						</Box>
 					</fieldset>
 				</form>
 			</DialogContent>

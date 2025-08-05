@@ -18,6 +18,7 @@ export default {
 				// New: Parse the value which may be a JSON object
 				let destinationUrl = longUrl;
 				let utmParams = {};
+				let tags = []; // Initialize tags
 				try {
 					const value = JSON.parse(longUrl);
 					destinationUrl = value.longUrl;
@@ -26,11 +27,12 @@ export default {
 						utm_medium: value.utm_medium,
 						utm_campaign: value.utm_campaign,
 					};
+					tags = value.tags || []; // Extract tags if present, default to empty array
 				} catch {
 					// It's a plain string, do nothing.
 				}
 
-				event.waitUntil(logGoogleAnalytics(request, env, shortCode, destinationUrl, utmParams));
+				event.waitUntil(logGoogleAnalytics(request, env, shortCode, destinationUrl, utmParams, tags));
 				return Response.redirect(destinationUrl, 302);
 			} else {
 				const rootUrl = env.ROOT_REDIRECT_URL || 'https://racket.gr';
@@ -44,7 +46,7 @@ export default {
 	},
 };
 // New function to handle the Google Analytics logging
-async function logGoogleAnalytics(request, env, shortCode, longUrl, utmParams = {}) {
+async function logGoogleAnalytics(request, env, shortCode, longUrl, utmParams = {}, tags = []) {
 	const measurementId = env.GOOGLE_ANALYTICS_MEASUREMENT_ID;
 	const apiSecret = env.GOOGLE_ANALYTICS_API_SECRET;
 
@@ -91,6 +93,7 @@ async function logGoogleAnalytics(request, env, shortCode, longUrl, utmParams = 
 					request_hostname: new URL(request.url).hostname,
 					link_short_code: shortCode,
 					link_longUrl: longUrl,
+					link_tags: tags.join(','),
 				},
 			},
 		],
