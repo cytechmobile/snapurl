@@ -1,14 +1,8 @@
 
-const fs = require('fs');
-const path = require('path');
-
 const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const CLOUDFLARE_KV_NAMESPACE_ID = process.env.CLOUDFLARE_KV_NAMESPACE_ID;
 const CLOUDFLARE_API_BASE_URL = 'https://api.cloudflare.com/client/v4';
-
-const projectRoot = path.resolve(__dirname, '..', '..');
-const csvPath = path.join(projectRoot, 'url-mappings.csv');
 
 async function makeCloudflareApiCall(method, endpoint, body = null) {
 	const headers = {
@@ -69,15 +63,6 @@ const fetchFromKVAndCache = async () => {
 			mappings.push({ shortCode: key.name, longUrl: value.trim(), tags: [] });
 		}
 	}
-	const csvContent = [
-		'Short Code,Long URL,UTM Source,UTM Medium,UTM Campaign,Tags',
-		...mappings.map((m) => {
-			const longUrl = m.longUrl.replace(/"/g, '""'); // Escape double quotes
-			const tags = m.tags ? m.tags.join('|').replace(/"/g, '""') : ''; // Join tags with | and escape double quotes
-			return `"${m.shortCode}","${longUrl}","${m.utm_source || ''}","${m.utm_medium || ''}","${m.utm_campaign || ''}","${tags}"`;
-		}),
-	];
-	fs.writeFileSync(csvPath, csvContent.join('\n'));
 	return mappings;
 };
 

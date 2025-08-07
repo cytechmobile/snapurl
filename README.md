@@ -11,13 +11,9 @@ A high-performance URL shortener implemented using Cloudflare Workers and Cloudf
   - **Cloudflare Workers Analytics Engine:** Built-in integration for logging event data (short code accessed, country, user agent) for scalable, real-time analytics within the Cloudflare dashboard.
   - **Google Analytics 4 (GA4) Measurement Protocol:** Option to send detailed event data (including geographical information like country, region, and city) directly to your GA4 property for comprehensive tracking.
 
-## Management Interfaces
+## Management Interface
 
-You can manage your short links using the provided Web UI:
-
-**Web UI (Recommended):** A user-friendly, local web interface for creating, deleting, and viewing links, complete with QR code generation. The Web UI now features a server-based architecture to securely handle Cloudflare API requests and requires Google authentication for access. Access is restricted to a predefined list of authorized Google email addresses. See the [Web UI README](./web-ui/README.md) for setup instructions.
-
-The Web UI has been improved to provide more consistent and user-friendly feedback, including clearer error messages, client-side validation, and notifications for all operations.
+You can manage your short links using the provided Web UI, which is a fully-featured, single-page application deployed on Cloudflare Pages. It provides a user-friendly interface for creating, deleting, and viewing links, complete with QR code generation. The entire interface is protected by Cloudflare Access, ensuring only authorized users can manage your links. See the [Web UI README](./web-ui/README.md) for more details.
 
 ## Core Setup (Cloudflare Worker)
 
@@ -90,3 +86,19 @@ If you'd like to contribute to this project, please refer to the [LICENSE](LICEN
 ## **License**
 
 This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+
+## Authentication
+
+The SnapURL management UI is protected by Cloudflare Access to ensure that only authorized users can manage URL mappings. This provides a robust, secure, and seamless authentication experience.
+
+### How It Works
+
+1.  **User Authentication:** When a user navigates to the web UI, they are intercepted by Cloudflare Access and prompted to log in with a configured identity provider (e.g., Google, GitHub, or a one-time password).
+2.  **Authorization Cookie:** Upon successful login, Cloudflare Access issues a secure, `HttpOnly` cookie (`CF_Authorization`) to the user's browser. This cookie is scoped to the application's domain.
+3.  **Authenticated API Requests:** The React application is configured to send credentials with every API request. The browser automatically attaches the `CF_Authorization` cookie to all calls made to the API worker.
+4.  **CORS and Security:** The API worker is configured with a strict Cross-Origin Resource Sharing (CORS) policy that:
+    *   Only allows requests from the specific web UI's origin.
+    *   Requires credentials to be sent.
+    *   Explicitly allows the `Cf-Access-Jwt-Assertion` header, which contains the user's identity information.
+
+This architecture ensures that both the front-end and back-end are secured by the same robust authentication and authorization system, without exposing any secrets or tokens on the client side.

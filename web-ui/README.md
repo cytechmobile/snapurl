@@ -1,144 +1,63 @@
 # Web UI for SnapURL
 
-This directory contains a local-only web application that provides a graphical user interface (UI) for managing SnapURL. It is designed to be run on your local machine and acts as a more user-friendly alternative to the command-line TUI.
+This directory contains the assets for the SnapURL web interface. It is a modern, single-page application (SPA) built with React and Vite, and it is deployed as a Cloudflare Worker.
+
+## Architecture
+
+The web UI is composed of two distinct Cloudflare Workers that work together:
+
+1.  **UI Worker (`web-ui`):** This worker, defined in `web-ui/wrangler.toml`, is responsible for serving the static assets (HTML, CSS, JavaScript) of the React application. It is the primary entry point for users.
+
+2.  **API Worker (`web-ui-server-worker`):** This worker provides a backend API for the UI to communicate with. It handles all the logic for creating, reading, updating, and deleting URL mappings in the Cloudflare KV namespace.
+
+Both workers are protected by a single **Cloudflare Access** application, which ensures that only authenticated and authorized users can access the UI and its corresponding API.
 
 ## Features
 
-- **Authentication with Google OAuth 2.0:** Securely log in using your Google account.
-- **Authorization by Email:** Access to the application's features is restricted to a predefined list of authorized Google email addresses.
+- **Cloudflare Access Integration:** Securely log in using any identity provider configured in your Cloudflare Zero Trust account (e.g., Google, GitHub, one-time password).
 - **Full CRUD Operations:** Create, read, update, and delete short links.
 - **QR Code Generation:** Instantly generate a QR code for any short link.
 - **Configurable Hostname:** Set your short link domain directly in the UI (persisted in browser storage).
 - **UTM Parameter Support:** Add `utm_source`, `utm_medium`, and `utm_campaign` parameters when creating links.
-- **Search and Refresh:** Easily find links across all pages and refresh the local cache from Cloudflare KV.
+- **Search and Refresh:** Easily find links across all pages and refresh the data from Cloudflare KV.
 - **URL Validation:** Real-time validation of long URLs for reachability and format.
-- **Enhanced User Feedback:** Improved error messages and notifications for a smoother user experience.
+- **Enhanced User Feedback:** Clear error messages and notifications for all operations.
 - **Pagination:** Navigate through large sets of short URLs with customizable items per page.
-
-## How It Works
-
-This is not a traditional, public-facing web application. It consists of two main parts:
-
-1.  **Local API Server (`server.js`):** A lightweight Express.js server that runs on your machine. It listens for requests from the frontend and securely communicates with the Cloudflare API using an API token to manage your KV namespace.
-2.  **React Frontend (`client/`):** A modern React application built with Vite that provides the user interface. It runs in your browser and communicates with the local API server.
 
 ## Configuration
 
-Before running the application, you need to create two `.env` files.
+All configuration for the web UI is now managed through Cloudflare's dashboard and the respective `wrangler.toml` files.
 
-1.  **Server Configuration (`web-ui/.env`):**
-    Create a file named `.env` in the `web-ui/` directory with the following content:
-
-    ```
-    # The port for the local web UI server to run on.
-    PORT=3001
-
-    # Cloudflare API credentials
-    CLOUDFLARE_API_TOKEN=your_cloudflare_api_token
-    CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
-    CLOUDFLARE_KV_NAMESPACE_ID=your_kv_namespace_id
-
-    # Google OAuth Credentials
-    GOOGLE_CLIENT_ID=your_google_client_id
-    GOOGLE_CLIENT_SECRET=your_google_client_secret
-
-    # Session Secret (Generate a strong, random string for this)
-    SESSION_SECRET=your_random_session_secret_string
-
-    # Comma-separated list of Google email addresses authorized to use the app
-    AUTHORIZED_GOOGLE_EMAILS=admin@example.com,another.admin@example.com
-    ```
+1.  **Cloudflare Access:**
+    *   A single Cloudflare Access application should be configured to protect the domains of both the UI worker and the API worker.
+    *   The Access application's CORS (Cross-Origin Resource Sharing) settings must be configured to allow requests from the UI's domain to the API's domain.
 
 2.  **Client Configuration (`web-ui/client/.env`):**
-    Create a file named `.env` in the `web-ui/client/` directory with the following content:
+    This file contains the build-time configuration for the React application:
 
     ```
-    # The default URL for your Cloudflare Worker.
-    VITE_WORKER_URL=https://your-shortener.workers.dev
+    # The domain of your Cloudflare Access login page (e.g., my-team.cloudflareaccess.com)
+    VITE_AUTH_DOMAIN=your_auth_domain
 
-    # The base URL for the local API server
-    VITE_API_BASE_URL=http://localhost:3001/api
+    # The full base URL for your deployed API worker
+    VITE_API_BASE_URL=https://your-api-worker.workers.dev/api
     ```
 
-    **Note:** The `VITE_` prefix is required by Vite.
+## Development
 
-## Development Mode
-
-In development mode, you run two separate processes: the API server and the Vite development server for the client.
-
-**1. Start the API Server:**
-In a terminal, navigate to the `web-ui` directory and run:
+For local development, you can run the Vite development server for the client. You will need to have a deployed version of the API worker to point to.
 
 ```bash
-npm install
-node server.js
-```
-
-The API server will start on the port you defined in `.env` (e.g., `http://localhost:3001`).
-
-**2. Start the React Client:**
-In a _second_ terminal, navigate to the `web-ui/client` directory and run:
-
-```bash
+# From the web-ui/client/ directory
 npm install
 npm run dev
 ```
 
-The client development server will typically start on `http://localhost:5173`. Open this URL in your browser to use the application.
+## Deployment
 
----
-
-## Production Mode
-
-In production mode, the React application is first built into a set of optimized, static files. The local API server then serves these files directly, so you only need to run one process.
-
-**1. Build the Client:**
-First, create the production build of the UI.
-
-```bash
-# From the web-ui/client/ directory
-npm run build
-```
-
-This will create a `dist` directory inside `web-ui/client`. You only need to do this when you have made changes to the client-side code.
-
-**2. Run the Production Server:**
-Navigate to the `web-ui` directory and start the server.
+To deploy the web UI, you deploy the `web-ui` worker. This will automatically build the client application and include it in the deployment.
 
 ```bash
 # From the web-ui/ directory
-node server.js
+npx wrangler deploy
 ```
-
-The server will now handle everything. You can access the application by opening your browser to **http://localhost:3001**.
-<img width="1049" height="927" alt="Screenshot 2025-07-31 at 09 18 13" src="https://github.com/user-attachments/assets/fc8cfb81-3158-47e6-9f3b-c95bbad2037f" />
-
-## Requirements
-
-- Node.js 18.0.0 or higher
-- A Cloudflare API token with permissions to edit the KV namespace.
-- A Google Cloud Project configured for OAuth 2.0 (see Google's documentation for details).
-
-## Security Considerations
-
-- This Web UI is designed for **local, authenticated use only**. It uses a Cloudflare API token and Google OAuth credentials to interact with your accounts.
-- **Do NOT expose this server to the public internet.** It does not have authentication mechanisms suitable for public access beyond the configured authorized email addresses.
-- **Protect your `.env` file and all sensitive credentials (Cloudflare API token, Google Client Secret, Session Secret).** Do not commit them to version control.
-
-## Troubleshooting
-
-- **"Cannot find module 'express'" or similar:** Run `npm install` in both `web-ui/` and `web-ui/client/` directories.
-- **"Cloudflare API error":** Check your Cloudflare API token, account ID, and KV namespace ID in the `web-ui/.env` file. Ensure the token has the correct permissions.
-- **"Google OAuth Error" or redirect issues:** Verify your `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `callbackURL` in `web-ui/server.js` and your Google Cloud Project settings. Ensure authorized redirect URIs are correctly configured in Google Cloud.
-- **"Forbidden" error after logging in:** Your Google email address is likely not in the `AUTHORIZED_GOOGLE_EMAILS` list in `web-ui/.env`. Add your email to this list.
-- **"CSV file not found" warning:** This is normal on first run - the CSV file will be created automatically
-- **Frontend not loading:** Verify both the API server and the React client are running (in development mode). In production mode, ensure the client has been built (`npm run build`) and the server is running.
-- **CORS errors:** Ensure `VITE_API_BASE_URL` in `web-ui/client/.env` matches the `PORT` in `web-ui/.env` and the server's actual running port.
-
-## License
-
-This project is licensed under the GNU General Public License v3.0. See the [LICENSE](../LICENSE) file for details.
-
----
-
-Built for SnapURL 🔗
