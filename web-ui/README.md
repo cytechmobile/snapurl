@@ -1,16 +1,18 @@
 # Web UI for SnapURL
 
-This directory contains the assets for the SnapURL web interface. It is a modern, single-page application (SPA) built with React and Vite, and it is deployed as a Cloudflare Worker.
+This directory contains the assets for the SnapURL web interface. It is a modern, single-page application (SPA) built with React and Vite, and served via Cloudflare Workers.
 
 ## Architecture
 
-The web UI is composed of two distinct Cloudflare Workers that work together:
+The web UI is composed of a React frontend and a backend API, which are deployed as two separate Cloudflare Workers:
 
-1.  **UI Worker (`web-ui`):** This worker, defined in `web-ui/wrangler.toml`, is responsible for serving the static assets (HTML, CSS, JavaScript) of the React application. It is the primary entry point for users.
+1.  **Client (React SPA):** The single-page application, located in the `client/` directory. It is a standard Vite-based React application.
 
-2.  **API Worker (`web-ui-server-worker`):** This worker provides a backend API for the UI to communicate with. It handles all the logic for creating, reading, updating, and deleting URL mappings in the Cloudflare KV namespace.
+2.  **UI Worker (`workers-site`):** This is a simple worker that serves the built static assets (HTML, CSS, JavaScript) of the React application. It uses the configuration in `web-ui/wrangler.toml` to act as a static site host.
 
-Both workers are protected by a single **Cloudflare Access** application, which ensures that only authenticated and authorized users can access the UI and its corresponding API.
+3.  **API Worker (`web-ui-server-worker`):** This worker, located in the `web-ui-server-worker/` directory, provides a backend API for the UI. It handles all the logic for creating, reading, updating, and deleting URL mappings in the Cloudflare KV namespace.
+
+Both the UI and API workers should be protected by a single **Cloudflare Access** application, which ensures that only authenticated and authorized users can access the UI and its corresponding API.
 
 ## Features
 
@@ -26,7 +28,7 @@ Both workers are protected by a single **Cloudflare Access** application, which 
 
 ## Configuration
 
-All configuration for the web UI is now managed through Cloudflare's dashboard and the respective `wrangler.toml` files.
+All configuration for the web UI is managed through Cloudflare's dashboard and the respective `wrangler.toml` files.
 
 1.  **Cloudflare Access:**
     *   A single Cloudflare Access application should be configured to protect the domains of both the UI worker and the API worker.
@@ -36,11 +38,8 @@ All configuration for the web UI is now managed through Cloudflare's dashboard a
     This file contains the build-time configuration for the React application:
 
     ```
-    # The domain of your Cloudflare Access login page (e.g., my-team.cloudflareaccess.com)
-    VITE_AUTH_DOMAIN=your_auth_domain
-
     # The full base URL for your deployed API worker
-    VITE_API_BASE_URL=https://your-api-worker.workers.dev/api
+    VITE_API_BASE_URL=https://your-api-worker.workers.dev
     ```
 
 ## Development
@@ -55,9 +54,14 @@ npm run dev
 
 ## Deployment
 
-To deploy the web UI, you deploy the `web-ui` worker. This will automatically build the client application and include it in the deployment.
+To deploy the application, you must deploy both workers separately from their respective directories.
 
 ```bash
-# From the web-ui/ directory
+# Deploy the UI Worker
+cd web-ui
+npx wrangler deploy
+
+# Deploy the API Worker
+cd ../web-ui-server-worker
 npx wrangler deploy
 ```
