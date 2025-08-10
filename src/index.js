@@ -32,8 +32,16 @@ export default {
 					// It's a plain string, do nothing.
 				}
 
+				// Append UTM parameters to the destination URL for reliable tracking
+				const finalUrl = new URL(destinationUrl);
+				for (const [key, value] of Object.entries(utmParams)) {
+					if (value) {
+						finalUrl.searchParams.append(key, value);
+					}
+				}
+
 				event.waitUntil(logGoogleAnalytics(request, env, shortCode, destinationUrl, utmParams, tags));
-				return Response.redirect(destinationUrl, 302);
+				return Response.redirect(finalUrl.toString(), 302);
 			} else {
 				const rootUrl = env.ROOT_REDIRECT_URL || 'https://racket.gr';
 				return Response.redirect(rootUrl, 302);
