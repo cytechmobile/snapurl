@@ -62,6 +62,6 @@ cd web-ui
 npx wrangler deploy
 
 # Deploy the API Worker
-cd ../web-ui-server-worker
+cd web-ui-server-worker
 npx wrangler deploy
 ```
