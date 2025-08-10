@@ -73,9 +73,15 @@ This worker provides the backend API for the management UI.
 
 This worker serves the React management interface.
 
-1.  Navigate to the `web-ui/client` directory.
-2.  Create a new file named `.env`.
-3.  Add the following content to the `.env` file, replacing the placeholder values:
+1.  First, navigate to the `web-ui/client` directory to build the React application:
+    ```bash
+    cd web-ui/client
+    ```
+2.  Install the dependencies:
+    ```bash
+    npm install
+    ```
+3.  Create a new file named `.env` and add the following content, replacing the placeholder values:
     ```
     # The domain of your Cloudflare Access login page (e.g., my-team.cloudflareaccess.com)
     VITE_AUTH_DOMAIN=your_auth_domain_from_step_4
@@ -83,7 +89,15 @@ This worker serves the React management interface.
     # The full base URL for your deployed API worker (e.g., https://api.yourdomain.com/api)
     VITE_API_BASE_URL=https://your_api_worker_domain/api
     ```
-4.  In your terminal, navigate to the `web-ui` directory and run the deployment command:
+4.  Build the React application. This will create a `dist` directory containing the static assets.
+    ```bash
+    npm run build
+    ```
+5.  Navigate back to the parent `web-ui` directory:
+    ```bash
+    cd ..
+    ```
+6.  From the `web-ui` directory, deploy the worker:
     ```bash
     npx wrangler deploy
     ```
