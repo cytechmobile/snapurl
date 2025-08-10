@@ -41,6 +41,7 @@ export default {
 				}
 
 				event.waitUntil(logGoogleAnalytics(request, env, shortCode, destinationUrl, utmParams, tags));
+				console.log(`Redirecting to: ${finalUrl.toString()}`);
 				return Response.redirect(finalUrl.toString(), 302);
 			} else {
 				const rootUrl = env.ROOT_REDIRECT_URL || 'https://racket.gr';
