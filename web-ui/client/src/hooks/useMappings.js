@@ -13,7 +13,7 @@ export function useMappings() {
         setError(null);
         try {
             const url = force ? `${API_BASE_URL}/mappings?force=true` : `${API_BASE_URL}/mappings`;
-            const response = await fetch(url);
+            const response = await fetch(url, { credentials: 'include' });
             if (!response.ok) {
                 throw new Error(`Server error: ${response.statusText}`);
             }
@@ -53,6 +53,7 @@ export function useMappings() {
             const response = await fetch(`${API_BASE_URL}/mappings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     shortCode: newMapping.shortCode,
                     longUrl: newMapping.longUrl,
@@ -84,6 +85,7 @@ export function useMappings() {
             const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     longUrl: formData.longUrl,
                     utm_source: formData.utm_source,
@@ -109,7 +111,7 @@ export function useMappings() {
         setMappings((prev) => prev.filter((m) => m.shortCode !== shortCode));
 
         try {
-            const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, { method: 'DELETE' });
+            const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, { method: 'DELETE', credentials: 'include' });
 
             if (!response.ok) {
                 const result = await response.json();

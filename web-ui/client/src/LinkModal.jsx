@@ -60,7 +60,7 @@ const LinkModal = ({ initialData = {}, onClose, onSave, existingShortCodes, test
 				setUrlValidationMessage('Checking URL...');
 
 				try {
-					const response = await fetch(`${API_BASE_URL}/validate-url?url=${encodeURIComponent(url)}`);
+					const response = await fetch(`${API_BASE_URL}/validate-url?url=${encodeURIComponent(url)}`, { credentials: 'include' });
 					const result = await response.json();
 
 					if (result.isValid) {

@@ -16,12 +16,13 @@ import {
 } from '@mui/material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { AppBar, Toolbar as MuiToolbar } from '@mui/material'; // Renamed Toolbar to MuiToolbar to avoid conflict
-import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward, ContentCopy, Login, Logout } from '@mui/icons-material';
+import { Add, Refresh, QrCode, Edit, Delete, ArrowUpward, ArrowDownward, ContentCopy } from '@mui/icons-material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Grid } from '@mui/material';
 import { useMappings } from './hooks/useMappings';
 import LinkModal from './LinkModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL || 'http://localhost:3001';
 const WORKER_URL_FALLBACK = import.meta.env.VITE_WORKER_URL || 'https://your-worker.workers.dev';
 
 function App() {
@@ -37,29 +38,10 @@ function App() {
 	const [shortUrlHost, setShortUrlHost] = useState(() => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK);
 	const [snackbarOpen, setSnackbarOpen] = useState(false);
 	const [snackbarMessage, setSnackbarMessage] = useState('');
-	const [user, setUser] = useState(null); // New state for user information
 
 	useEffect(() => {
 		localStorage.setItem('shortUrlHost', shortUrlHost);
 	}, [shortUrlHost]);
-
-	// New useEffect to check login status on app load
-	useEffect(() => {
-		const checkLoginStatus = async () => {
-			try {
-				const response = await fetch(`${API_BASE_URL}/user`);
-				if (response.ok) {
-					const userData = await response.json();
-					if (userData.user) {
-						setUser(userData.user);
-					}
-				}
-			} catch (err) {
-				console.error("Failed to check login status:", err);
-			}
-		};
-		checkLoginStatus();
-	}, []);
 
 	const handleShowCreateModal = () => {
 		setEditingMapping({}); // Open modal with empty object for creation
@@ -184,9 +166,19 @@ function App() {
 		}
 	};
 
+	const handleLogout = () => {
+		const authDomain = window.AUTH_DOMAIN;
+		if (authDomain && authDomain !== '__AUTH_DOMAIN__') {
+			const logoutUrl = `https://${authDomain}/cdn-cgi/access/logout`;
+			window.location.href = logoutUrl;
+		} else {
+			console.error('Auth domain is not configured.');
+		}
+	};
+
 	return (
 		<Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-			<Header user={user} />
+			<Header onLogout={handleLogout} />
 			<Box component="main" sx={{ flexGrow: 1, p: 4 }}>
 				<SettingsBar host={shortUrlHost} onHostChange={(e) => setShortUrlHost(e.target.value)} />
 				<Toolbar
@@ -257,24 +249,15 @@ const SettingsBar = ({ host, onHostChange }) => (
 	</Paper>
 );
 
-const Header = ({ user }) => (
+const Header = ({ onLogout }) => (
 	<AppBar position="static" sx={{ mb: 3, boxShadow: 3 }}>
 		<MuiToolbar>
 			<Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
 				🔗 SnapURL
 			</Typography>
-			{user ? (
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-					<Typography variant="subtitle1">Welcome, {user.displayName || user.id}!</Typography>
-					<Button color="inherit" startIcon={<Logout />} href="/auth/logout">
-						Logout
-					</Button>
-				</Box>
-			) : (
-				<Button color="inherit" startIcon={<Login />} href="/auth/google">
-					Login with Google
-				</Button>
-			)}
+			<Button color="inherit" onClick={onLogout}>
+				Logout
+			</Button>
 		</MuiToolbar>
 	</AppBar>
 );
