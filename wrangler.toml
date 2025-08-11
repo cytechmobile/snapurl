@@ -8,17 +8,17 @@ compatibility_date = "2024-01-01"
 # You can find this ID in your Cloudflare Dashboard under:
 # Workers & Pages > KV > SNAPURL_KV
 # =================================================================
-[[kv_namespaces]]
-binding = "SNAPURL_KV"
-id = "bb0b757c25914a818f3d0c146371d780"
+#[[kv_namespaces]]
+#binding = "SNAPURL_KV"
+#id = "*********************************"
 
 # =================================================================
 # Action Required: Set your desired root redirect URL below.
 # This is where users will be sent if they visit the root of your
 # shortener domain (e.g., https://www.your-website.com).
 # =================================================================
-[vars]
-ROOT_REDIRECT_URL = "https://racket.gr/404/"
+#[vars]
+#ROOT_REDIRECT_URL = "https://www.your-webite.com/"
 
 # =================================================================
 # Enables observability and logging features for the worker.
