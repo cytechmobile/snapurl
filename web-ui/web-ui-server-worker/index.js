@@ -7,7 +7,7 @@ export default {
 };
 
 async function handleRequest(request, env) {
-  const allowedOrigin = 'https://www.url.racket.gr';
+  const allowedOrigin = env.CORS_ALLOWED_ORIGIN;
   const corsHeaders = {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, DELETE, OPTIONS',

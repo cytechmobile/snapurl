@@ -10,14 +10,14 @@ describe('URL Shortener Worker', () => {
 		await Promise.all(promises);
 	});
 
-	it('should redirect root to racket.gr by default', async () => {
+	it('should redirect root to example.com by default', async () => {
 		const request = new Request('http://example.com/');
 		const ctx = createExecutionContext();
 		const response = await worker.fetch(request, env, ctx);
 		await waitOnExecutionContext(ctx);
 
 		expect(response.status).toBe(302);
-		expect(response.headers.get('Location')).toBe('https://racket.gr/');
+		expect(response.headers.get('Location')).toBe('https://example.com/');
 	});
 
 	it('should redirect root to custom ROOT_REDIRECT_URL if set', async () => {
@@ -62,14 +62,14 @@ describe('URL Shortener Worker', () => {
 		// Note: Verifying GA event parameters would require mocking `fetch` within the worker, which is more complex.
 	});
 
-	it('should redirect to racket.gr for a non-existent short code', async () => {
+	it('should redirect to example.com for a non-existent short code', async () => {
 		const request = new Request('http://example.com/non-existent-code');
 		const ctx = createExecutionContext();
 		const response = await worker.fetch(request, env, ctx);
 		await waitOnExecutionContext(ctx);
 
 		expect(response.status).toBe(302);
-		expect(response.headers.get('Location')).toBe('https://racket.gr/');
+		expect(response.headers.get('Location')).toBe('https://example.com/');
 	});
 
 	it('should return 500 for KV lookup errors', async () => {
