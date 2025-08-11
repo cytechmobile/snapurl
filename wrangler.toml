@@ -1,0 +1,27 @@
+# This is the configuration file for the main URL redirector worker.
+name = "snapurl"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# =================================================================
+# Action Required: You must fill in the 'id' for your KV namespace.
+# You can find this ID in your Cloudflare Dashboard under:
+# Workers & Pages > KV > SNAPURL_KV
+# =================================================================
+[[kv_namespaces]]
+binding = "SNAPURL_KV"
+id = "bb0b757c25914a818f3d0c146371d780"
+
+# =================================================================
+# Action Required: Set your desired root redirect URL below.
+# This is where users will be sent if they visit the root of your
+# shortener domain (e.g., https://www.your-website.com).
+# =================================================================
+[vars]
+ROOT_REDIRECT_URL = "https://racket.gr/"
+
+# =================================================================
+# Enables observability and logging features for the worker.
+# =================================================================
+[observability]
+enabled = true
