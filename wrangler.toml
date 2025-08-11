@@ -18,7 +18,7 @@ id = "bb0b757c25914a818f3d0c146371d780"
 # shortener domain (e.g., https://www.your-website.com).
 # =================================================================
 [vars]
-ROOT_REDIRECT_URL = "https://racket.gr/"
+ROOT_REDIRECT_URL = "https://racket.gr/404/"
 
 # =================================================================
 # Enables observability and logging features for the worker.
