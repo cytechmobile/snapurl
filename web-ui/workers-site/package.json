@@ -1,0 +1,13 @@
+{
+  "name": "workers-site",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild index.js --bundle --outfile=dist/index.js --minify",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0"
+  }
+}
