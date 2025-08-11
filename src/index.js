@@ -8,7 +8,7 @@ export default {
 
 		if (shortCode === '') {
 			// Redirect root to your main website or show a landing page
-			const rootUrl = env.ROOT_REDIRECT_URL || 'https://racket.gr';
+			const rootUrl = env.ROOT_REDIRECT_URL || 'https://example.com';
 			return Response.redirect(rootUrl, 302);
 		}
 		try {
@@ -44,7 +44,7 @@ export default {
 				console.log(`Redirecting to: ${finalUrl.toString()}`);
 				return Response.redirect(finalUrl.toString(), 302);
 			} else {
-				const rootUrl = env.ROOT_REDIRECT_URL || 'https://racket.gr';
+				const rootUrl = env.ROOT_REDIRECT_URL || 'https://example.com';
 				return Response.redirect(rootUrl, 302);
 				//return new Response("Short URL not found", { status: 404 });
 			}
