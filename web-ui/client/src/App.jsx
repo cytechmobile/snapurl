@@ -72,6 +72,7 @@ function App() {
 		if (success) {
 			setSnackbarMessage('Short URL updated successfully!');
 			setSnackbarOpen(true);
+			fetchMappings(true);
 		} else {
 			setSnackbarMessage(`Error updating short URL: ${error}`);
 			setSnackbarOpen(true);
@@ -349,23 +350,23 @@ const MappingTable = ({
 				<TableBody>
 					{mappings.map((mapping) => (
 						<TableRow key={mapping.shortCode}>
-							<TableCell component="th" scope="row">
+							<TableCell component="th" scope="row" sx={{ py: 2, whiteSpace: 'nowrap' }}>
 								{mapping.shortCode}
 							</TableCell>
-							<TableCell>
+							<TableCell sx={{ py: 2, wordBreak: 'break-all' }}>
 								<a href={mapping.longUrl} target="_blank" rel="noopener noreferrer">
 									{mapping.longUrl}
 								</a>
 							</TableCell>
-							<TableCell>
+							<TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
 								<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 									{mapping.tags && mapping.tags.map((tag) => <Chip key={tag} label={tag} size="small" onClick={() => onTagChipClick(tag)} sx={{ cursor: 'pointer' }} />)}
 								</Box>
 							</TableCell>
-                            <TableCell>
+                            <TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
                                 {mapping.lastUpdated ? new Date(mapping.lastUpdated).toLocaleString() : 'N/A'}
                             </TableCell>
-							<TableCell align="right">
+							<TableCell align="right" sx={{ py: 2, whiteSpace: 'nowrap' }}>
 								<IconButton onClick={() => onCopyToClipboard(mapping.shortCode)} color="primary" aria-label="copy short url">
 									<ContentCopy />
 								</IconButton>
