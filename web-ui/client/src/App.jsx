@@ -31,8 +31,8 @@ function App() {
 	const [clickedTagFilter, setClickedTagFilter] = useState(''); // New state for clicked tag filter
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
-	const [sortColumn, setSortColumn] = useState('shortCode');
-	const [sortDirection, setSortDirection] = useState('asc');
+	const [sortColumn, setSortColumn] = useState('lastUpdated');
+	const [sortDirection, setSortDirection] = useState('desc');
 	const [editingMapping, setEditingMapping] = useState(null); // Use this for both create and edit
 	const [qrCodeValue, setQrCodeValue] = useState(null);
 	const [shortUrlHost, setShortUrlHost] = useState(() => localStorage.getItem('shortUrlHost') || WORKER_URL_FALLBACK);
@@ -178,7 +178,7 @@ function App() {
 	};
 
 	return (
-		<Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+		<Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
 			<Header onLogout={handleLogout} />
 			<Box component="main" sx={{ flexGrow: 1, p: 4 }}>
 				<SettingsBar host={shortUrlHost} onHostChange={(e) => setShortUrlHost(e.target.value)} />
@@ -350,23 +350,23 @@ const MappingTable = ({
 				<TableBody>
 					{mappings.map((mapping) => (
 						<TableRow key={mapping.shortCode}>
-							<TableCell component="th" scope="row" sx={{ py: 2, whiteSpace: 'nowrap' }}>
+							<TableCell component="th" scope="row" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
 								{mapping.shortCode}
 							</TableCell>
-							<TableCell sx={{ py: 2, wordBreak: 'break-all' }}>
+							<TableCell sx={{ py: 1.5, wordBreak: 'break-all' }}>
 								<a href={mapping.longUrl} target="_blank" rel="noopener noreferrer">
 									{mapping.longUrl}
 								</a>
 							</TableCell>
-							<TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
+							<TableCell sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
 								<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 									{mapping.tags && mapping.tags.map((tag) => <Chip key={tag} label={tag} size="small" onClick={() => onTagChipClick(tag)} sx={{ cursor: 'pointer' }} />)}
 								</Box>
 							</TableCell>
-                            <TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
+                            <TableCell sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
                                 {mapping.lastUpdated ? new Date(mapping.lastUpdated).toLocaleString() : 'N/A'}
                             </TableCell>
-							<TableCell align="right" sx={{ py: 2, whiteSpace: 'nowrap' }}>
+							<TableCell align="right" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
 								<IconButton onClick={() => onCopyToClipboard(mapping.shortCode)} color="primary" aria-label="copy short url">
 									<ContentCopy />
 								</IconButton>
