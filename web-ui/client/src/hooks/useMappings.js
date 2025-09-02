@@ -26,6 +26,7 @@ export function useMappings() {
                     utm_medium: m.utm_medium || '',
                     utm_campaign: m.utm_campaign || '',
                     tags: m.tags || [],
+                    lastUpdated: m.lastUpdated,
                 }));
                 setMappings(sanitizedMappings);
             } else {
