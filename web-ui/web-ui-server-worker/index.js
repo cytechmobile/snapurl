@@ -42,6 +42,7 @@ async function handleRequest(request, env) {
             utm_medium: parsedValue.utm_medium,
             utm_campaign: parsedValue.utm_campaign,
             tags: parsedValue.tags || [],
+            lastUpdated: parsedValue.lastUpdated,
           });
         } catch {
           mappings.push({ shortCode: key.name, longUrl: value.trim(), tags: [] });
@@ -57,6 +58,7 @@ async function handleRequest(request, env) {
         utm_medium: utm_medium || '',
         utm_campaign: utm_campaign || '',
         tags: tags || [],
+        lastUpdated: new Date().toISOString(),
       });
       await env.SNAPURL_KV.put(shortCode, value);
     };
@@ -68,6 +70,7 @@ async function handleRequest(request, env) {
         utm_medium: utm_medium || '',
         utm_campaign: utm_campaign || '',
         tags: tags || [],
+        lastUpdated: new Date().toISOString(),
       });
       await env.SNAPURL_KV.put(shortCode, value);
     };
