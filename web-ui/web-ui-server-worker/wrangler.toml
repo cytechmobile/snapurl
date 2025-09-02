@@ -10,7 +10,7 @@ id = "bb0b757c25914a818f3d0c146371d780"
 
 
 [vars]
-CORS_ALLOWED_ORIGIN = "http://localhost:5173"
+CORS_ALLOWED_ORIGIN = "https://example.com/"
 
 [observability]
 enabled = true
