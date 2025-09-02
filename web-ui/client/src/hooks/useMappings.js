@@ -78,9 +78,6 @@ export function useMappings() {
 
     const updateMapping = async (formData) => {
         const { shortCode } = formData;
-        const originalMappings = mappings;
-
-        setMappings((prev) => prev.map((m) => (m.shortCode === shortCode ? formData : m)));
 
         try {
             const response = await fetch(`${API_BASE_URL}/mappings/${shortCode}`, {
@@ -102,7 +99,6 @@ export function useMappings() {
             }
             return { success: true };
         } catch (err) {
-            setMappings(originalMappings);
             return { success: false, error: err.message };
         }
     };
