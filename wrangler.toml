@@ -1,5 +1,5 @@
 # This is the configuration file for the main URL redirector worker.
-name = "snapurl"
+name = "snapurl-web-ui-server"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
