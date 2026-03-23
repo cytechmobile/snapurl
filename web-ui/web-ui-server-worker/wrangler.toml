@@ -6,11 +6,11 @@ compatibility_date = "2024-01-01"
 
 [[kv_namespaces]]
 binding = "SNAPURL_KV"
-id = "bb0b757c25914a818f3d0c146371d780"
+id = "6c3ecbd5f8a043978c0d2959544acf75"
 
 
 [vars]
-CORS_ALLOWED_ORIGIN = "https://www.url.racket.gr"
+CORS_ALLOWED_ORIGIN = "https://www.url.prosms.gr"
 
 [observability]
 enabled = true
