@@ -17,7 +17,7 @@ id = "6c3ecbd5f8a043978c0d2959544acf75"
 # This is where users will be sent if they visit the root of your
 # shortener domain (e.g., https://www.your-website.com).
 # =================================================================
-#[vars]
+[vars]
 ROOT_REDIRECT_URL = "https://www.prosms.gr/"
 
 # =================================================================
