@@ -5,6 +5,7 @@ preview_urls = false
 
 [[routes]]
 pattern = "server.url.prosms.gr"
+custom_domain = true
 
 [[kv_namespaces]]
 binding = "SNAPURL_KV"
