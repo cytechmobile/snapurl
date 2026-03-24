@@ -1,9 +1,11 @@
 name = "snapurl-web-ui"
 main = "workers-site/index.js"
 compatibility_date = "2024-01-01"
+preview_urls = false
 
-#[site]
-#bucket = "./client/dist"
+[[routes]]
+pattern = "www.url.racket.gr"
+custom_domain = true
 
 [observability]
 enabled = true
