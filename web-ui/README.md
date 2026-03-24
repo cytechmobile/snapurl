@@ -1,6 +1,6 @@
-# Web UI for SnapURL
+# Web UI for ProsMS SnapURL
 
-This directory contains the assets for the SnapURL web interface. It is a modern, single-page application (SPA) built with React and Vite, and served via Cloudflare Workers.
+This directory contains the assets for the ProsMS SnapURL web interface. It is a modern, single-page application (SPA) built with React and Vite, and served via Cloudflare Workers.
 
 ## Architecture
 
@@ -39,7 +39,7 @@ All configuration for the web UI is managed through Cloudflare's dashboard and t
 
     ```
     # The full base URL for your deployed API worker
-    VITE_API_BASE_URL=https://your-api-worker.workers.dev
+    VITE_API_BASE_URL=https://server.url.prosms.gr
     ```
 
 ## Development

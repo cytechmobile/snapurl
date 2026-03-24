@@ -1,6 +1,6 @@
 # UI Serving Worker
 
-This Cloudflare Worker is responsible for serving the static assets (HTML, CSS, JavaScript) of the SnapURL React user interface.
+This Cloudflare Worker is responsible for serving the static assets (HTML, CSS, JavaScript) of the ProsMS SnapURL React user interface.
 
 ## How It Works
 

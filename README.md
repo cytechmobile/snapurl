@@ -1,10 +1,10 @@
-# **SnapURL**
+# **ProsMS SnapURL**
 
 A high-performance URL shortener implemented using Cloudflare Workers and Cloudflare KV. This project allows you to create custom short links that **redirect** users to the original long **URL**, all while providing options for detailed analytics.
 
 ## **Features**
 
-- **Custom Short Links:** Create unique, memorable short URLs (e.g., yourshort.link/my-project).
+- **Custom Short Links:** Create unique, memorable short URLs (e.g., url.prosms.gr/my-project).
 - **URL Redirection:** The Worker sends an HTTP redirect (302 Found) to the user's browser, directing them to the original long URL.
 - **Cloudflare KV Storage:** Leverages Cloudflare's Key-Value store for fast and globally distributed storage of URL mappings.
 - **Analytics Integration:**
@@ -22,7 +22,7 @@ This section covers the one-time setup for the Cloudflare Worker that powers the
 ### Prerequisites
 
 1.  **Cloudflare Account:** An active Cloudflare account.
-2.  **Domain:** A domain registered and managed by Cloudflare DNS. You'll typically use a subdomain (e.g., `s.yourdomain.com`) for your short links.
+2.  **Domain:** A domain registered and managed by Cloudflare DNS. You'll typically use a subdomain (e.g., `url.prosms.gr`) for your short links.
 3.  **Node.js & npm:** Ensure you have Node.js installed on your local machine.
 
 ### Installation & Configuration
@@ -53,7 +53,7 @@ This section covers the one-time setup for the Cloudflare Worker that powers the
     *   Click "Quick Edit" or "Deploy" to paste your Worker code (from `src/index.js`) directly into the editor, or upload it.
 
 2.  **Set up a Custom Domain:**
-    For a professional look, use your own short domain (e.g., `s.yourdomain.com`):
+    For a professional look, use your own short domain (e.g., `url.prosms.gr`):
     - Log in to your Cloudflare dashboard.
     - Go to **Workers & Pages** > Select your Worker.
     - Navigate to **Settings > Triggers > Custom Domains**.
@@ -65,7 +65,7 @@ Once the worker is deployed, use one of the [Management Interfaces](#management-
 
 ### Accessing Short Links
 
-Visit your short URL in a browser (e.g., `https://s.yourdomain.com/my-link`). The Worker will redirect the user to the long URL.
+Visit your short URL in a browser (e.g., `https://url.prosms.gr/my-link`). The Worker will redirect the user to the long URL.
 
 ### **Analytics**
 
