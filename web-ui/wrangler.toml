@@ -14,8 +14,3 @@ head_sampling_rate = 1 # optional. default = 1.
 [assets]
 directory = "./client/dist"
 binding = "ASSETS"
-
-[vars]
-VITE_API_BASE_URL = "https://server.url.prosms.gr/api"
-VITE_AUTH_DOMAIN = "cytech.cloudflareaccess.com"
-VITE_WORKER_URL = "https://url.prosms.gr"
