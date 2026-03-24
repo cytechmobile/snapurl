@@ -1,8 +1,10 @@
 name = "prosms-snapurl-web-ui-server"
 main = "index.js"
 compatibility_date = "2024-01-01"
+preview_urls = false
 
-
+[[routes]]
+pattern = "server.url.prosms.gr"
 
 [[kv_namespaces]]
 binding = "SNAPURL_KV"
