@@ -9,7 +9,7 @@ custom_domain = true
 
 [observability]
 enabled = true
-head_sampling_rate = 1 # optional. default = 1.
+head_sampling_rate = 1
 
 [assets]
 directory = "./client/dist"
